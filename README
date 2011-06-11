@@ -1,0 +1,3 @@
+Rock-Paper-Scissors-Node is an over-the-internet implementation of rock-paper scissors.
+It is written in node.js 0.4.8, express, and socket.io on the server side.
+On the client side, it is written in jQuery, HTML5, and CSS3.
