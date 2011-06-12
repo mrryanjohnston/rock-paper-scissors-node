@@ -7,7 +7,6 @@ var express  = require('express'),
     mongoose = require('mongoose'),
     models   = require('./models'),
     bcrypt   = require('bcrypt'),
-    dnode    = require('dnode'),
     User,
     Games;
 
@@ -175,25 +174,6 @@ app.get('/play', loggedOutNotAllowed, function(req, res){
 });
 
 app.listen(3000);
-
-var server = dnode({
-  test: function(callback) {
-    callback('Test');
-  },
-  createGame: function (username, callback) {
-    var newGame = new Game();
-    newGame.gameID  = Date.now();
-    console.log(username + " created a game");
-    newGame.player1 = username;
-    newGame.status  = 'Waiting';
-    newGame.save(function (err) {
-      if (err) { throw err; }
-        //Game created
-        callback('Waiting for opponent');
-    });
-  }
-});
-server.listen(app);
 console.log("Express server listening on port %d", app.address().port);
 
 
