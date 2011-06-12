@@ -1,0 +1,14 @@
+script(src='/dnode.js')
+script(src='http://code.jquery.com/jquery-latest.js')
+script
+  $(function() {
+    DNode.connect(function (remote) {
+      console.log('here');
+      remote.test(function(n) { alert(n) });
+      remote.createGame(#{session.username}, function (response) {
+        alert(response);
+      });
+    });
+  });
+h1= title
+input(type='button', id='findgame', name='findgame', value='Find a Game!')

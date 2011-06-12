@@ -1,0 +1,17 @@
+h1= title
+p Welcome to #{title}
+  - if (session.username)
+    , #{session.username}.
+    =session
+    =session.id
+ul
+- if (!session.username)
+  li
+    a(href="/login") Login
+  li
+    a(href="/register") Register
+- else
+  li
+    a(href="/play") Play!
+  li
+    a(href="/logout") Logout

@@ -1,0 +1,11 @@
+!!!
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    - if (info)
+      = info
+    - if (warn)
+      = warn
+    != body
