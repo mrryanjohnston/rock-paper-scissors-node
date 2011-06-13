@@ -174,7 +174,6 @@ app.get('/play', loggedOutNotAllowed, function(req, res){
 });
 
 app.listen(3000);
-server.listen(app);
 console.log("Express server listening on port %d", app.address().port);
 
 
