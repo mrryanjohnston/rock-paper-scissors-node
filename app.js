@@ -7,8 +7,8 @@ var express  = require('express'),
     mongoose = require('mongoose'),
     models   = require('./models'),
     bcrypt   = require('bcrypt'),
-    User,
-    Games;
+    io       = require('socket.io'),
+    User;
 
 var app = module.exports = express.createServer();
 
@@ -178,48 +178,113 @@ console.log("Express server listening on port %d", app.address().port);
 
 
 // socket.io, I choose you
-//var socket = io.listen(app);
+var socket = io.listen(app);
 
 //Here's the juicy stuff
+var Game = {}
 
-/*socket.on('connection', function(client){
-  console.log('User ' + client.sessionid + ' has connected');
-  client.on('message', function(data){ 
-    //A connection type is sent when the user first loads the /play page
-    if (data.type==='connection') {
-      //If the user is in a game
-      if (false) {
-        
-      } else {
-        //Look for a game
-        Game.findOne({status: 'Waiting'}, function (err, game) {
-          if (err) { throw err; }
-          //If game is waiting
-          if (game) {
-            game.player2 = data.payload;
-            game.status  = 'Playing';
-            game.save(function(err) {
-              if (err) { throw err; }
-              client.send('You joined game ' + game.gameID);
-            });
-          } else {
-            //Create a new game
-            var newGame = new Game();
-            newGame.gameID  = Date.now();
-            console.log(data.payload);
-            newGame.player1 = data.payload;
-            newGame.status  = 'Waiting';
-            newGame.save(function (err) {
-              if (err) { throw err; }
-                //Game created
-                client.send('Waiting for opponent');
-            });
-          }
-        });
+//We need this countdown here to have a timeout based timer,
+//and a way to cancel this timeout timer
+function Countdown() {
+  self = this
+  //Timer is the actual act of counting down
+  self.timer = function(seconds, callback) {
+    setTimeout(function() {
+      callback(seconds);
+      if (seconds===0) {
+        return
       }
+      self.timer(seconds-1, callback);
+    }, 1000);
+  }
+}
+
+//tim_smart in IRC offered this solution:
+//This solution reduces function reference counts on the heap. Implement this tomorrow.
+/*
+function Countdown(seconds) {
+  this.seconds = seconds
+}
+
+Countdown.prototype._tick = function (seconds, callback) {
+  var countdown = this
+
+  setTimeout(function () {
+    callback(seconds)
+
+    if (seconds <= 0) {
+      return
+    }
+
+    countdown._tick(seconds - 1, callback)
+  }, 1000)
+
+  return this
+}
+
+Countdown.prototype.start = function (callback) {
+  return this._tick(this.seconds, callback)
+}
+
+var countdown = new Countdown(5)
+countdown.start(function (seconds_left) {
+  console.log(seconds_left)
+})
+*/
+
+socket.on('connection', function(client){
+  console.log('User ' + client.sessionId + ' has connected');
+  client.on('message', function(msg){ 
+    //When a player clicks on /play, they send a 'search' message to the
+    //server
+    if (msg.type==='search') {
+      /////
+      //Game Initialization
+      /////
+      //If there isn't a game already, create one, then tell the clien to
+      //wait
+      if (!Game.player1) {
+        Game.player1 = client
+        client.username = msg.data
+        client.game = Game
+        client.send({type: 'wait', data: 'Waiting for opponent'});
+        console.log('Player 1 initialized as ' + msg.data);
+      } else { //If there is a game, have this player join the game, and then
+      //free up the Game variable for the next client pair
+        Game.player2 = client
+        client.username = msg.data
+        console.log('Player 2 initialized as ' + msg.data);
+        client.game = Game
+        client.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
+        client.send({type: 'gamestatus', data: 'Game is about to begin!'})
+        client.game.player1.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
+        client.game.player1.send({type: 'gamestatus', data: 'Game is about to begin!'})
+        Game = {}
+      }
+    } else if (msg.type==='ready') {
+      //Now, since we're at this point, we assume both players are
+      //ready to go. Just in case, though, we'll give them 5 seconds
+      //to collect their thoughts
+      console.log('One of the players is ready');
+      var newCountdown = new Countdown();
+      newCountdown.timer(5, function(seconds) {
+        client.send({type: 'timer', data: seconds});
+        //If the seconds is 1, then we'll start the game timer (3 seconds)
+        if (seconds===0) {
+          newCountdown.timer(3, function(seconds) {
+            //If the seconds are not at 0 yet, just send back the number
+            if(seconds!==0) {
+              client.send({type: 'timer', data: seconds});
+            } else { //Else, it's go time. Check the user choices, and
+            //determine the winner
+              client.send({type: 'gamestatus', data: 'SHOOT!'});
+            }
+          });
+        }
+      });
     }
   })
   client.on('disconnect', function(){  })
-});*/
+});
 
 

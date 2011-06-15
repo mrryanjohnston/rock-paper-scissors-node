@@ -1,15 +1,51 @@
-script(src='/dnode.js')
+script(src='/socket.io/socket.io.js')
 script(src='http://code.jquery.com/jquery-latest.js')
 script
-  $(function() {
-  console.log('here');
-    DNode.connect(function (remote) {
-      console.log('here');
-      remote.test(function(n) { alert(n) });
-      remote.createGame(#{session.username}, function (response) {
-        alert(response);
+  var socket = new io.Socket(); 
+  socket.connect();
+    $(function() {
+      //When the player joins, the script will first see if a game is available
+      //If now game is available, create a new game
+      socket.send({'type': 'search', 'data': '#{session.username}'})
+      
+      //When we get a message from the server, we will interpret it and provide
+      //the relevant information to the player
+      socket.on('message', function(msg) {
+        switch (msg.type) {
+          //The player is asked to wait
+          case 'wait':
+            $('#player1name').html('#{session.username}')
+            $('#gamestatus').html(msg.data)
+            break;
+          //When a player joins, a 'join' message is sent to both players
+          //so that they can update their user interface with their opponent's
+          //and the player's names. Then tells the server they're ready
+          case 'join':
+            $('#player1name').html(msg.data.player1name)
+            $('#player2name').html(msg.data.player2name)
+            socket.send({'type': 'ready', 'data': ''});
+            break;
+          //If a timer is sent, we will display this message in the #timersection
+          case 'timer':
+            $('#timersection').html(msg.data)
+            break;
+          //Game status informs the player what's going on in the game
+          case 'gamestatus':
+            $('#gamestatus').html(msg.data)
+            break;
+        }
       });
     });
-  });
 h1= title
-input(type='button', id='findgame', name='findgame', value='Find a Game!')
+h2
+  #timersection
+h3
+  #gamestatus
+p Player 1: 
+  span#player1name
+p Player 1 Choice:
+  span#player1choice
+p Player 2: 
+  span#player2name
+p Player 2 Choice:
+  span#player2choice
