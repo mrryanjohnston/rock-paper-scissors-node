@@ -204,29 +204,51 @@ function Countdown() {
 /*
 function Countdown(seconds) {
   this.seconds = seconds
+  this._ms     = null
 }
 
-Countdown.prototype._tick = function (seconds, callback) {
+Countdown.prototype._tick = function (seconds, callback, ms) {
   var countdown = this
+    , timestamp = new Date().getTime()
+
+  ms       || (ms       = 1000)
+  this._ms || (this._ms = seconds * 1000)
 
   setTimeout(function () {
-    callback(seconds)
+    var taken     = new Date().getTime() - timestamp
+      , total_ms  = seconds * 1000
+      , new_ms    = countdown._ms - taken
+      , diff      = total_ms - new_ms
+      , secs_diff = Math.floor(diff / 1000)
+      , next
 
-    if (seconds <= 0) {
-      return
+    countdown._ms = new_ms
+
+    for (var i = 0; i < secs_diff; i++) {
+      callback(--seconds)
+      if (seconds === 0) {
+        countdown._ms = null
+        return
+      }
     }
 
-    countdown._tick(seconds - 1, callback)
-  }, 1000)
+    next = diff >= 1000
+         ? 1000 - (diff % 1000)
+         : 1000 - diff
+
+    countdown._tick(seconds, callback, next)
+  }, ms)
 
   return this
 }
 
 Countdown.prototype.start = function (callback) {
+  callback(this.seconds)
   return this._tick(this.seconds, callback)
 }
 
 var countdown = new Countdown(5)
+
 countdown.start(function (seconds_left) {
   console.log(seconds_left)
 })
