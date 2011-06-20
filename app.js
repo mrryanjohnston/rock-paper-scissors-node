@@ -390,8 +390,8 @@ socket.on('connection', function(client){
                     if (err) { throw err; }
                     if (user) {
                       //Update player1's stats here
-                      user.wins + player1.wins
-                      user.losses + player1.lose
+                      user.wins += player1.win
+                      user.losses += player1.lose
                       user.save(function (err) {
                       if (err) { throw err; }
                         console.log('saved')
@@ -401,8 +401,8 @@ socket.on('connection', function(client){
                       if (err) { throw err; }
                       if (user) {
                         //Update player2's stats here
-                        user.wins + player2.wins
-                        user.losses + player2.lose
+                        user.wins += player2.win
+                        user.losses += player2.lose
                         user.save(function (err) {
                          if (err) { throw err; }
                           console.log('saved')
