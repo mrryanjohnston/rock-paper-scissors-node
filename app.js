@@ -198,6 +198,7 @@ socket.on('connection', function(client){
         Game.player1 = client
         client.username = msg.data
         client.game = Game
+        client.choice = client.game.player1choice = {} //This will be the player's choice
         client.send({type: 'wait', data: 'Waiting for opponent'});
         console.log('Player 1 initialized as ' + msg.data);
       } else { //If there is a game, have this player join the game, and then
@@ -206,6 +207,7 @@ socket.on('connection', function(client){
         client.username = msg.data
         console.log('Player 2 initialized as ' + msg.data);
         client.game = Game
+        client.choice = client.game.player2choice = {} //This will be the player's choice
         client.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
         client.send({type: 'gamestatus', data: 'Game is about to begin!'})
         client.game.player1.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
@@ -229,9 +231,9 @@ socket.on('connection', function(client){
           self.player2.send(msg);
         }
         client.game.determinewinner = function() {
-          switch (self.player1choice) {
+          switch (self.player1choice.choice) {
                 case 'rock':
-                  switch (self.player2choice) {
+                  switch (self.player2choice.choice) {
                     case 'rock':
                       //Tie. Reshoot
                       self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
@@ -256,7 +258,7 @@ socket.on('connection', function(client){
                   break;
                 
                 case 'paper':
-                  switch (self.player2choice) {
+                  switch (self.player2choice.choice) {
                     case 'rock':
                       //Player1 wins
                        self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
@@ -284,7 +286,7 @@ socket.on('connection', function(client){
                   break;
                 
                 case 'scissors':
-                  switch (self.player2choice) {
+                  switch (self.player2choice.choice) {
                     case 'rock':
                       //Player1 loses
                       self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
@@ -312,8 +314,8 @@ socket.on('connection', function(client){
                   break;
                 default:
                   //This client didn't make a choice
-                  switch (self.player2choice) {
-                    case undefined:
+                  switch (self.player2choice.choice) {
+                    case null:
                       //Neither player made a choice
                        self.player1.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
                        self.player2.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
@@ -326,8 +328,8 @@ socket.on('connection', function(client){
                   }
                   break;
               }
-               self.player1.send({type: 'results', data: {player1choice: client.game.player1choice, player2choice: client.game.player2choice}});
-               self.player2.send({type: 'results', data: {player1choice: client.game.player1choice, player2choice: client.game.player2choice}});
+               self.player1.send({type: 'results', data: {player1choice: client.game.player1choice.choice, player2choice: client.game.player2choice.choice}});
+               self.player2.send({type: 'results', data: {player1choice: client.game.player1choice.choice, player2choice: client.game.player2choice.choice}});
             }
             Game = {}
             
@@ -339,6 +341,12 @@ socket.on('connection', function(client){
                 client.game.determinewinner();
               });
             });
+        }
+      } else if (msg.type==='choice') { //If the user is choosing which hand to play
+        console.log(client.username + " chose " + msg.data)
+        if (msg.data === 'rock' || msg.data === 'paper' || msg.data === 'scissors') {
+          client.choice.choice = msg.data // come up with a better name for ".choice.choice"
+          console.log('and it was accepted.')
         }
       }
     });

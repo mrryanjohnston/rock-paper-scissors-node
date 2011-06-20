@@ -10,7 +10,7 @@ script
       
       //When we get a message from the server, we will interpret it and provide
       //the relevant information to the player
-      /*socket.on('message', function(msg) {
+      socket.on('message', function(msg) {
         switch (msg.type) {
           //The player is asked to wait
           case 'wait':
@@ -23,7 +23,6 @@ script
           case 'join':
             $('#player1name').html(msg.data.player1name)
             $('#player2name').html(msg.data.player2name)
-            //socket.send({'type': 'ready', 'data': ''});
             break;
           //If a timer is sent, we will display this message in the #timersection
           case 'timer':
@@ -37,7 +36,16 @@ script
             $('#player1choice').html(msg.data.player1choice)
             $('#player2choice').html(msg.data.player2choice)
         }
-      });*/
+      });
+      $('#rock').click(function() {
+        socket.send({'type': 'choice', 'data': 'rock'});
+      });
+      $('#paper').click(function() {
+        socket.send({'type': 'choice', 'data': 'paper'});
+      });
+      $('#scissors').click(function() {
+        socket.send({'type': 'choice', 'data': 'scissors'});
+      });
     });
 h1= title
 h2
@@ -54,5 +62,5 @@ p Player 2 Choice:
   span#player2choice
 p
   input(type='button', name='rock', id='rock', value='ROCK!')
-  input(type='button', name='rock', id='rock', value='PAPER!')
-  input(type='button', name='rock', id='rock', value='SCISSORS!')
+  input(type='button', name='paper', id='paper', value='PAPER!')
+  input(type='button', name='scissors', id='scissors', value='SCISSORS!')
