@@ -230,8 +230,8 @@ socket.on('connection', function(client){
           self.player1.send(msg);
           self.player2.send(msg);
         }
-        client.game.determinewinner = function() {
-          switch (self.player1choice.choice) {
+        client.game.determinewinner = function(callback) {
+              switch (self.player1choice.choice) {
                 case 'rock':
                   switch (self.player2choice.choice) {
                     case 'rock':
@@ -243,16 +243,29 @@ socket.on('connection', function(client){
                       //Player1 loses
                       self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
                       self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      //Probably a nicer way to do this
+                      self.player2.win = 1
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 1
                       break;
                     case 'scissors':
                       //Player1 wins
                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                     default:
                       //Opponent didn't make a choice
                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                   }
                   break;
@@ -263,6 +276,10 @@ socket.on('connection', function(client){
                       //Player1 wins
                        self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
                        self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                     
                     case 'paper':
@@ -275,12 +292,20 @@ socket.on('connection', function(client){
                       //Player1 loses
                        self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
                        self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      self.player2.win = 1
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 1
                       break;
                     
                     default:
                       //Opponent didn't make a choice
                        self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
                        self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                   }
                   break;
@@ -291,12 +316,20 @@ socket.on('connection', function(client){
                       //Player1 loses
                       self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
                       self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      self.player2.win = 1
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 1
                       break;
                     
                     case 'paper':
                       //Player1 wins
                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                     
                     case 'scissors':
@@ -309,6 +342,10 @@ socket.on('connection', function(client){
                       //Opponent didn't make a choice
                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      self.player1.win = 1
+                      self.player1.lose = 0
+                      self.player2.win = 0
+                      self.player2.lose = 1
                       break;
                   }
                   break;
@@ -319,17 +356,26 @@ socket.on('connection', function(client){
                       //Neither player made a choice
                        self.player1.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
                        self.player2.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
+                       self.player2.win = 0
+                       self.player2.lose = 1
+                       self.player1.win = 0
+                       self.player1.lose = 1
                        break;
                     default:
                       //Player1 didn't make a choice
                       self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins by default! ' + self.player1.username + ' didn\'t choose!'});
                       self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins by default! ' + self.player1.username + ' didn\'t choose!'});
+                      self.player2.win = 1
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 1
                       break;
                   }
                   break;
               }
                self.player1.send({type: 'results', data: {player1choice: client.game.player1choice.choice, player2choice: client.game.player2choice.choice}});
                self.player2.send({type: 'results', data: {player1choice: client.game.player1choice.choice, player2choice: client.game.player2choice.choice}});
+               callback({'username': self.player1.username, 'win': self.player1.win, 'lose': self.player1.lose}, {'username': self.player2.username, 'win': self.player2.win, 'lose': self.player2.lose});
             }
             Game = {}
             
@@ -338,7 +384,33 @@ socket.on('connection', function(client){
               //Initial 5 seconds is over. Time for the players to make a choice
               client.game.sendtoboth({type: 'gamestatus', data: 'Choose your play!'});
               client.game.timer(3, client.game.timer, function() {
-                client.game.determinewinner();
+                client.game.determinewinner(function(player1, player2) {
+                  //Save the two players here
+                  User.findOne({username: player1.username}, function (err, user) {
+                    if (err) { throw err; }
+                    if (user) {
+                      //Update player1's stats here
+                      user.wins + player1.wins
+                      user.losses + player1.lose
+                      user.save(function (err) {
+                      if (err) { throw err; }
+                        console.log('saved')
+                      });
+                    }
+                    User.findOne({username: player2.username}, function (err, user) {
+                      if (err) { throw err; }
+                      if (user) {
+                        //Update player2's stats here
+                        user.wins + player2.wins
+                        user.losses + player2.lose
+                        user.save(function (err) {
+                         if (err) { throw err; }
+                          console.log('saved')
+                        });
+                      }
+                    });
+                  });
+                });
               });
             });
         }
