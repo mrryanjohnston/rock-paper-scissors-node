@@ -23,7 +23,7 @@ script
           case 'join':
             $('#player1name').html(msg.data.player1name)
             $('#player2name').html(msg.data.player2name)
-            socket.send({'type': 'ready', 'data': ''});
+            //socket.send({'type': 'ready', 'data': ''});
             break;
           //If a timer is sent, we will display this message in the #timersection
           case 'timer':
@@ -33,6 +33,9 @@ script
           case 'gamestatus':
             $('#gamestatus').html(msg.data)
             break;
+          case 'results':
+            $('#player1choice').html(msg.data.player1choice)
+            $('#player2choice').html(msg.data.player2choice)
         }
       });
     });
@@ -49,3 +52,7 @@ p Player 2:
   span#player2name
 p Player 2 Choice:
   span#player2choice
+p
+  input(type='button', name='rock', id='rock', value='ROCK!')
+  input(type='button', name='rock', id='rock', value='PAPER!')
+  input(type='button', name='rock', id='rock', value='SCISSORS!')

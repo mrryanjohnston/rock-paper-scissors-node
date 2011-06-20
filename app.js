@@ -183,21 +183,167 @@ var socket = io.listen(app);
 //Here's the juicy stuff
 var Game = {}
 
-//We need this countdown here to have a timeout based timer,
-//and a way to cancel this timeout timer
-function Countdown() {
-  self = this
-  //Timer is the actual act of counting down
-  self.timer = function(seconds, callback) {
-    setTimeout(function() {
-      callback(seconds);
-      if (seconds===0) {
-        return
+socket.on('connection', function(client){
+  console.log('User ' + client.sessionId + ' has connected');
+  client.on('message', function(msg){ 
+    //When a player clicks on /play, they send a 'search' message to the
+    //server
+    if (msg.type==='search') {
+      /////
+      //Game Initialization
+      /////
+      //If there isn't a game already, create one, then tell the client to
+      //wait
+      if (!Game.player1) {
+        Game.player1 = client
+        client.username = msg.data
+        client.game = Game
+        client.send({type: 'wait', data: 'Waiting for opponent'});
+        console.log('Player 1 initialized as ' + msg.data);
+      } else { //If there is a game, have this player join the game, and then
+      //free up the Game variable for the next client pair
+        Game.player2 = client
+        client.username = msg.data
+        console.log('Player 2 initialized as ' + msg.data);
+        client.game = Game
+        client.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
+        client.send({type: 'gamestatus', data: 'Game is about to begin!'})
+        client.game.player1.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
+        client.game.player1.send({type: 'gamestatus', data: 'Game is about to begin!'})
+        
+        client.game.timer = function(seconds, callback, next) {
+          var self = this;
+          self.player1.send({type: 'timer', data: seconds})
+          self.player2.send({type: 'timer', data: seconds})
+          if (seconds === 0) {
+            next.call(self);
+          } else {
+              setTimeout(function() {
+                callback.call(self, --seconds, callback, next);
+              }, 1000);
+          }
+        }
+        client.game.sendtoboth = function(msg) {
+          self = this
+          self.player1.send(msg);
+          self.player2.send(msg);
+        }
+        client.game.determinewinner = function() {
+          switch (self.player1choice) {
+                case 'rock':
+                  switch (self.player2choice) {
+                    case 'rock':
+                      //Tie. Reshoot
+                      self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      break;
+                    case 'paper':
+                      //Player1 loses
+                      self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      break;
+                    case 'scissors':
+                      //Player1 wins
+                      self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      break;
+                    default:
+                      //Opponent didn't make a choice
+                      self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      break;
+                  }
+                  break;
+                
+                case 'paper':
+                  switch (self.player2choice) {
+                    case 'rock':
+                      //Player1 wins
+                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      break;
+                    
+                    case 'paper':
+                      //Tie. Reshoot
+                       self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                       self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      break;
+                    
+                    case 'scissors':
+                      //Player1 loses
+                       self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                       self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      break;
+                    
+                    default:
+                      //Opponent didn't make a choice
+                       self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                       self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      break;
+                  }
+                  break;
+                
+                case 'scissors':
+                  switch (self.player2choice) {
+                    case 'rock':
+                      //Player1 loses
+                      self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins!'});
+                      break;
+                    
+                    case 'paper':
+                      //Player1 wins
+                      self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins!'});
+                      break;
+                    
+                    case 'scissors':
+                      //Tie. Reshoot
+                      self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      break;
+                    
+                    default:
+                      //Opponent didn't make a choice
+                      self.player1.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      self.player2.send({type: 'gamestatus', data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                      break;
+                  }
+                  break;
+                default:
+                  //This client didn't make a choice
+                  switch (self.player2choice) {
+                    case undefined:
+                      //Neither player made a choice
+                       self.player1.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
+                       self.player2.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
+                       break;
+                    default:
+                      //Player1 didn't make a choice
+                      self.player1.send({type: 'gamestatus', data: self.player2.username + ' wins by default! ' + self.player1.username + ' didn\'t choose!'});
+                      self.player2.send({type: 'gamestatus', data: self.player2.username + ' wins by default! ' + self.player1.username + ' didn\'t choose!'});
+                      break;
+                  }
+                  break;
+              }
+               self.player1.send({type: 'results', data: {player1choice: client.game.player1choice, player2choice: client.game.player2choice}});
+               self.player2.send({type: 'results', data: {player1choice: client.game.player1choice, player2choice: client.game.player2choice}});
+            }
+            Game = {}
+            
+            //Ok, Finally, we do the game.
+            client.game.timer(5, client.game.timer, function() {
+              //Initial 5 seconds is over. Time for the players to make a choice
+              client.game.sendtoboth({type: 'gamestatus', data: 'Choose your play!'});
+              client.game.timer(3, client.game.timer, function() {
+                client.game.determinewinner();
+              });
+            });
+        }
       }
-      self.timer(seconds-1, callback);
-    }, 1000);
-  }
-}
+    });
+  client.on('disconnect', function(){  })
+});
 
 //tim_smart in IRC offered this solution:
 //This solution reduces function reference counts on the heap. Implement this tomorrow.
@@ -253,60 +399,3 @@ countdown.start(function (seconds_left) {
   console.log(seconds_left)
 })
 */
-
-socket.on('connection', function(client){
-  console.log('User ' + client.sessionId + ' has connected');
-  client.on('message', function(msg){ 
-    //When a player clicks on /play, they send a 'search' message to the
-    //server
-    if (msg.type==='search') {
-      /////
-      //Game Initialization
-      /////
-      //If there isn't a game already, create one, then tell the clien to
-      //wait
-      if (!Game.player1) {
-        Game.player1 = client
-        client.username = msg.data
-        client.game = Game
-        client.send({type: 'wait', data: 'Waiting for opponent'});
-        console.log('Player 1 initialized as ' + msg.data);
-      } else { //If there is a game, have this player join the game, and then
-      //free up the Game variable for the next client pair
-        Game.player2 = client
-        client.username = msg.data
-        console.log('Player 2 initialized as ' + msg.data);
-        client.game = Game
-        client.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
-        client.send({type: 'gamestatus', data: 'Game is about to begin!'})
-        client.game.player1.send({type: 'join', data: {player1name: client.game.player1.username, player2name: client.game.player2.username}})
-        client.game.player1.send({type: 'gamestatus', data: 'Game is about to begin!'})
-        Game = {}
-      }
-    } else if (msg.type==='ready') {
-      //Now, since we're at this point, we assume both players are
-      //ready to go. Just in case, though, we'll give them 5 seconds
-      //to collect their thoughts
-      console.log('One of the players is ready');
-      var newCountdown = new Countdown();
-      newCountdown.timer(5, function(seconds) {
-        client.send({type: 'timer', data: seconds});
-        //If the seconds is 1, then we'll start the game timer (3 seconds)
-        if (seconds===0) {
-          newCountdown.timer(3, function(seconds) {
-            //If the seconds are not at 0 yet, just send back the number
-            if(seconds!==0) {
-              client.send({type: 'timer', data: seconds});
-            } else { //Else, it's go time. Check the user choices, and
-            //determine the winner
-              client.send({type: 'gamestatus', data: 'SHOOT!'});
-            }
-          });
-        }
-      });
-    }
-  })
-  client.on('disconnect', function(){  })
-});
-
-

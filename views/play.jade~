@@ -6,11 +6,11 @@ script
     $(function() {
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
-      socket.send({'type': 'search', 'data': '#{session.name}'})
+      socket.send({'type': 'search', 'data': '#{session.username}'})
       
       //When we get a message from the server, we will interpret it and provide
       //the relevant information to the player
-      socket.on('message', function(msg) {
+      /*socket.on('message', function(msg) {
         switch (msg.type) {
           //The player is asked to wait
           case 'wait':
@@ -23,7 +23,7 @@ script
           case 'join':
             $('#player1name').html(msg.data.player1name)
             $('#player2name').html(msg.data.player2name)
-            socket.send({'type': 'ready', 'data': ''});
+            //socket.send({'type': 'ready', 'data': ''});
             break;
           //If a timer is sent, we will display this message in the #timersection
           case 'timer':
@@ -33,8 +33,11 @@ script
           case 'gamestatus':
             $('#gamestatus').html(msg.data)
             break;
+          case 'results':
+            $('#player1choice').html(msg.data.player1choice)
+            $('#player2choice').html(msg.data.player2choice)
         }
-      });
+      });*/
     });
 h1= title
 h2
@@ -49,3 +52,7 @@ p Player 2:
   span#player2name
 p Player 2 Choice:
   span#player2choice
+p
+  input(type='button', name='rock', id='rock', value='ROCK!')
+  input(type='button', name='rock', id='rock', value='PAPER!')
+  input(type='button', name='rock', id='rock', value='SCISSORS!')
