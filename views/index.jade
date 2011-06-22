@@ -3,13 +3,16 @@ p Welcome to #{title}
   - if (session.username)
     , #{session.username}.
 ul
-- if (!session.username)
+  - if (!session.username)
+    li
+      a(href="/login") Login
+    li
+      a(href="/register") Register
+  - else
+    li
+      a(href="/play") Play!
+    li
+      a(href="/logout") Logout
   li
-    a(href="/login") Login
-  li
-    a(href="/register") Register
-- else
-  li
-    a(href="/play") Play!
-  li
-    a(href="/logout") Logout
+    a(href="/stats") Stats
+

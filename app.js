@@ -173,6 +173,31 @@ app.get('/play', loggedOutNotAllowed, function(req, res){
   });
 });
 
+app.get('/stats', function(req, res){
+  User.find({}).sort('wins', -1).limit(25).execFind(function(err, users) {
+    if (err) { throw err; }
+    res.render('stats', {
+      title: 'Rock, Paper, Scissors, Node!: Stats',
+      users: users
+    });
+  });
+});
+
+app.get('/stats/:username', function(req, res){
+  User.findOne({username: req.params.username}, function(err, user) {
+    if (err) { throw err; }
+    if (user) {
+      res.render('stats/individualstats', {
+        title: 'Rock, Paper, Scissors, Node!: Stats',
+        user: user
+      });
+    } else {
+      req.flash('warn', 'No user ' + req.params.username + ' was found!');
+      res.redirect('stats');
+    }
+  });
+});
+
 app.listen(3000);
 console.log("Express server listening on port %d", app.address().port);
 
@@ -284,8 +309,12 @@ socket.on('connection', function(client){
                     
                     case 'paper':
                       //Tie. Reshoot
-                       self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
-                       self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                       self.player1.send({type: 'gamestatus', data: 'Tie! You are awarded no points!'});
+                       self.player2.send({type: 'gamestatus', data: 'Tie! You are awarded no points!'});
+                      self.player2.win = 0
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 0
                       break;
                     
                     case 'scissors':
@@ -352,7 +381,7 @@ socket.on('connection', function(client){
                 default:
                   //This client didn't make a choice
                   switch (self.player2choice.choice) {
-                    case null:
+                    case undefined:
                       //Neither player made a choice
                        self.player1.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});
                        self.player2.send({type: 'gamestatus', data: 'No one wins! Neither chose!'});

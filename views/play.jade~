@@ -4,6 +4,9 @@ script
   var socket = new io.Socket(); 
   socket.connect();
     $(function() {
+      //Start off with the buttons hidden (There MUST be a better way to do this)
+      $('#gamecontrols').hide();
+      $('#playagain').hide();
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
       socket.send({'type': 'search', 'data': '#{session.username}'})
@@ -32,11 +35,22 @@ script
           case 'gamestatus':
             $('#gamestatus').html(msg.data)
             break;
+          //Game is over. Hide the controls. Show the replay button.
           case 'results':
+            $('#gamecontrols').hide();
+            $('#playagain').show();
             $('#player1choice').html(msg.data.player1choice)
             $('#player2choice').html(msg.data.player2choice)
         }
+        switch (msg.data) {
+          case 'Choose your play!':
+            $('#gamecontrols').show();
+            break;
+          default:
+            break;
+        }
       });
+      //Button Clicks
       $('#rock').click(function() {
         socket.send({'type': 'choice', 'data': 'rock'});
       });
@@ -46,6 +60,10 @@ script
       $('#scissors').click(function() {
         socket.send({'type': 'choice', 'data': 'scissors'});
       });
+      $('#playagain').click(function() {
+        socket.send({'type': 'search', 'data': '#{session.username}'});
+        $('#playagain').hide();
+      });
     });
 h1= title
 h2
@@ -54,13 +72,15 @@ h3
   #gamestatus
 p Player 1: 
   span#player1name
-p Player 1 Choice:
+p Player 1 Choice: 
   span#player1choice
 p Player 2: 
   span#player2name
-p Player 2 Choice:
+p Player 2 Choice: 
   span#player2choice
-p
+p#gamecontrols
   input(type='button', name='rock', id='rock', value='ROCK!')
   input(type='button', name='paper', id='paper', value='PAPER!')
   input(type='button', name='scissors', id='scissors', value='SCISSORS!')
+p#playagain
+  input(type='button', name='playagain', id='playagain', value='Play Again?')

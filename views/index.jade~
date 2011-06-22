@@ -2,8 +2,6 @@ h1= title
 p Welcome to #{title}
   - if (session.username)
     , #{session.username}.
-    =session
-    =session.id
 ul
 - if (!session.username)
   li
@@ -15,3 +13,4 @@ ul
     a(href="/play") Play!
   li
     a(href="/logout") Logout
+
