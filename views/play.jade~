@@ -4,9 +4,6 @@ script
   var socket = new io.Socket(); 
   socket.connect();
     $(function() {
-      //Start off with the buttons hidden (There MUST be a better way to do this)
-      $('#gamecontrols').hide();
-      $('#playagain').hide();
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
       socket.send({'type': 'search', 'data': '#{session.username}'})
@@ -19,6 +16,9 @@ script
           case 'wait':
             $('#player1name').html('#{session.username}')
             $('#gamestatus').html(msg.data)
+            $('#player1choice').html('')
+            $('#player2choice').html('')
+            $('#player2name').html('')
             break;
           //When a player joins, a 'join' message is sent to both players
           //so that they can update their user interface with their opponent's
@@ -70,17 +70,20 @@ h2
   #timersection
 h3
   #gamestatus
-p Player 1: 
-  span#player1name
-p Player 1 Choice: 
-  span#player1choice
-p Player 2: 
-  span#player2name
-p Player 2 Choice: 
-  span#player2choice
-p#gamecontrols
-  input(type='button', name='rock', id='rock', value='ROCK!')
-  input(type='button', name='paper', id='paper', value='PAPER!')
-  input(type='button', name='scissors', id='scissors', value='SCISSORS!')
-p#playagain
-  input(type='button', name='playagain', id='playagain', value='Play Again?')
+#gamearea
+  #player1
+    p Player 1: 
+      span#player1name
+    p Player 1 Choice: 
+      span#player1choice
+  #player2
+    p Player 2: 
+      span#player2name
+    p Player 2 Choice: 
+      span#player2choice
+  p#gamecontrols
+    input(type='button', name='rock', id='rock', value='ROCK!', style='display: none;')
+    input(type='button', name='paper', id='paper', value='PAPER!', style='display: none;')
+    input(type='button', name='scissors', id='scissors', value='SCISSORS!', style='display: none;')
+  p#playagain
+    input(type='button', name='playagain', id='playagain', value='Play Again?', style='display: none;')

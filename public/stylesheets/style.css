@@ -6,3 +6,48 @@ body {
 a {
   color: #00B7FF;
 }
+
+#warn, #info {
+  border: 1px solid;
+  padding: 10px;
+  width: 400px;
+}
+
+#warn {
+  color: red;
+  border-color: red;
+}
+
+#info {
+  color: green;
+  border-color: green;
+}
+
+#timersection {
+  width: 300px;
+  margin: 0px auto;
+}
+#gamestatus {
+  width: 300px;
+  margin: 0px auto;
+}
+#gamearea {
+  width: 600px;
+}
+#player1 {
+  width: 300px;
+  float: left;
+}
+#player2 {
+  width: 300px;
+  float: right;
+  text-align: right;
+}
+#gamecontrols {
+  width: 300px;
+  margin: 0px auto;
+}
+#playagain {
+  width: 300px;
+  margin: 0px auto;
+}
