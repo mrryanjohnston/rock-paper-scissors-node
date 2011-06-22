@@ -3,12 +3,13 @@
  * Module dependencies.
  */
 
-var express  = require('express'),
-    mongoose = require('mongoose'),
-    models   = require('./models'),
-    bcrypt   = require('bcrypt'),
-    io       = require('socket.io'),
-    User;
+var express   = require('express'),
+    mongoose  = require('mongoose'),
+    models    = require('./models'),
+    bcrypt    = require('bcrypt'),
+    io        = require('socket.io'),
+    User,
+    sanitizer = require('sanitizer');
 
 var app = module.exports = express.createServer();
 
@@ -76,7 +77,7 @@ function isPasswordSame(req, res, next) {
 }
 
 function isCredentialCorrect(req, res, next) {
-  User.findOne({username: req.body.username}, function (err, user) {
+  User.findOne({username: sanitizer.escape(req.body.username)}, function (err, user) {
     if (err) { throw err; }
     if (user) {
       bcrypt.compare(req.body.password, user.passwordhash, function(err, passwordIsGood) {
@@ -111,6 +112,15 @@ function loggedOutNotAllowed(req, res, next) {
   }
 }
 
+function usernameLessThanSixteen(req, res, next) {
+  if (req.body.username.length>16) {
+    req.flash('warn', 'Username must be less than 16 characters.');
+    res.redirect('/register');
+  } else {
+    next();
+  }
+}
+
 // Routes
 
 app.get('/', function(req, res){
@@ -125,13 +135,13 @@ app.get('/register', loggedInNotAllowed, function(req, res){
   });
 });
 
-app.post('/register', loggedInNotAllowed, isUsernameTaken, isPasswordSame, function(req, res){
+app.post('/register', loggedInNotAllowed, isUsernameTaken, isPasswordSame, usernameLessThanSixteen, function(req, res){
   bcrypt.gen_salt(10, function(err, salt) { 
     if (err) { throw err; }
     bcrypt.encrypt(req.body.password, salt, function(err, hash) {
       if (err) { throw err; }
       var newUser = new User();
-      newUser.username = req.body.username;
+      newUser.username = sanitizer.escape(req.body.username);
       newUser.passwordhash = hash;
       newUser.wins = 0;
       newUser.losses = 0;
@@ -184,7 +194,7 @@ app.get('/stats', function(req, res){
 });
 
 app.get('/stats/:username', function(req, res){
-  User.findOne({username: req.params.username}, function(err, user) {
+  User.findOne({username: sanitizer.escape(req.params.username)}, function(err, user) {
     if (err) { throw err; }
     if (user) {
       res.render('stats/individualstats', {
@@ -192,7 +202,7 @@ app.get('/stats/:username', function(req, res){
         user: user
       });
     } else {
-      req.flash('warn', 'No user ' + req.params.username + ' was found!');
+      req.flash('warn', 'No user ' + sanitizer.escape(req.params.username) + ' was found!');
       res.redirect('stats');
     }
   });

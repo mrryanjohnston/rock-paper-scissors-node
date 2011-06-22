@@ -3,8 +3,10 @@ p Note: In the future, you'll be able to login with Facebook, Twitter, etc! Woo!
 p Please enter your credentials below to register:
 form(name='register', id='register', method='post')
   p Username:
-    input(type='text', id='username', name='username', maxlength='20')
+    input(type='text', id='username', name='username', maxlength='16')
   p Password:
     input(type='password', id='password', name='password')
   p Password (again):
     input(type='password', id='passwordagain', name='passwordagain')
+  p
+    input(type='submit', id='register', name='register', value='Register!')
