@@ -1,0 +1,11 @@
+h1= title
+p These are the stats, currently. 
+  - if (session.username)
+    a(href='../stats/'+session.username) Your stats 
+table#stats
+  tr
+    th Name
+    th Wins
+    th Losses
+  !=partial('user', users);
+  

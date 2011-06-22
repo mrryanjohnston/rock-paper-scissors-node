@@ -26,22 +26,35 @@ a {
 #timersection {
   width: 300px;
   margin: 0px auto;
+  text-align: center;
 }
 #gamestatus {
   width: 300px;
   margin: 0px auto;
+  text-align: center;
 }
 #gamearea {
   width: 600px;
+  margin: 0px auto;
 }
 #player1 {
   width: 300px;
   float: left;
+  text-align: center;
+}
+#player1choice img {
+  width: 300px;
+}
+#player2choice {
+  text-align: right;
+}
+#player2choice img {
+  width: 300px;
 }
 #player2 {
   width: 300px;
   float: right;
-  text-align: right;
+  text-align: center;
 }
 #gamecontrols {
   width: 300px;

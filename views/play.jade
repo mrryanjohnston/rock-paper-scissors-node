@@ -39,8 +39,8 @@ script
           case 'results':
             $('#gamecontrols').hide();
             $('#playagain').show();
-            $('#player1choice').html(msg.data.player1choice)
-            $('#player2choice').html(msg.data.player2choice)
+            $('#player1choice').html('<img src="/images/'+msg.data.player1choice+'.png" alt="'+msg.data.player1choice+'"/>')
+            $('#player2choice').html('<img src="/images/'+msg.data.player2choice+'.png" alt="'+msg.data.player2choice+'"/>')
         }
         switch (msg.data) {
           case 'Choose your play!':
@@ -62,6 +62,8 @@ script
       });
       $('#playagain').click(function() {
         socket.send({'type': 'search', 'data': '#{session.username}'});
+        $('#player1choice').html('')
+        $('#player2choice').html('')
         $('#playagain').hide();
       });
     });
@@ -72,14 +74,14 @@ h3
   #gamestatus
 #gamearea
   #player1
-    p Player 1: 
+    h3 
       span#player1name
-    p Player 1 Choice: 
+    p
       span#player1choice
   #player2
-    p Player 2: 
+    h3
       span#player2name
-    p Player 2 Choice: 
+    p 
       span#player2choice
   p#gamecontrols(style='display: none;')
     input(type='button', name='rock', id='rock', value='ROCK!')

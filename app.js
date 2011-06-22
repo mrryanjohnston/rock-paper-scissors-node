@@ -263,6 +263,10 @@ socket.on('connection', function(client){
                       //Tie. Reshoot
                       self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
                       self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      self.player2.win = 0
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 0
                       break;
                     case 'paper':
                       //Player1 loses
@@ -365,6 +369,10 @@ socket.on('connection', function(client){
                       //Tie. Reshoot
                       self.player1.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
                       self.player2.send({type: 'gamestatus', data: 'Tie! Reshoot in 5 seconds!'});
+                      self.player2.win = 0
+                      self.player2.lose = 0
+                      self.player1.win = 0
+                      self.player1.lose = 0
                       break;
                     
                     default:
