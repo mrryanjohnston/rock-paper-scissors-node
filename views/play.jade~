@@ -62,6 +62,8 @@ script
       });
       $('#playagain').click(function() {
         socket.send({'type': 'search', 'data': '#{session.username}'});
+        $('#player1choice').html('')
+        $('#player2choice').html('')
         $('#playagain').hide();
       });
     });
