@@ -1,3 +1,4 @@
 # ignore generated text editor files from Bone Crusher
 *~
 db
+node_modules/
