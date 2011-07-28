@@ -1,13 +1,12 @@
 {
-    "name": "application-name"
-  , "version": "0.0.1"
-  , "private": true
-  , "dependencies": {
-      "express": "2.3.11"
-    , "jade": ">= 0.0.1"
-    , "socket.io": "0.7.2"
-    , "bcrypt":"0.2.3"
-    , "mongoose":"1.4.0"
-    , "sanitizer":"0.0.14"
+  "name": "rock-paper-scissors",
+  "version": "0.0.2",
+  "private": true,
+  "dependencies": {
+    "express": "~2.3.11",
+    "jade": "~0.13.0",
+    "mongoose": "~1.7.4",
+    "socket.io": "~0.7.7",
+    "bcrypt": "~0.2.3"
   }
 }
