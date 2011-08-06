@@ -1,13 +1,15 @@
 h1= title
 p Welcome to #{title}
-  - if (session.username)
-    , #{session.username}.
+  - if (everyauth.loggedIn)
+    , #{everyauth.twitter.user.name}. Oh yeah, and #{everyauth.twitter.displayName}.
 ul
-  - if (!session.username)
+  - if (!everyauth.loggedIn)
     li
       a(href="/login") Login
     li
       a(href="/register") Register
+    li
+      a(href="/auth/twitter") Login with Twitter!
   - else
     li
       a(href="/play") Play!

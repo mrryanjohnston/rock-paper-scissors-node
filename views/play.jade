@@ -54,25 +54,27 @@ script
       });
     });
 h1= title
-h2
-  #timersection
-h3
-  #gamestatus
-#gamearea
-  #player1
-    h3 
-      span#player1name
+#gameareawrapper
+  #playerareawrapper
+    #player1
+      h3 
+        span#player1name
+      p
+        span#player1choice
+    #player2
+      h3
+        span#player2name
+      p 
+        span#player2choice
+  #gamemetrics
     p
-      span#player1choice
-  #player2
-    h3
-      span#player2name
-    p 
-      span#player2choice
-  p#gamecontrols(style='display: none;')
-    input(type='button', name='rock', id='rock', value='ROCK!')
-    input(type='button', name='paper', id='paper', value='PAPER!')
-    input(type='button', name='scissors', id='scissors', value='SCISSORS!')
-  p#playagain(style='display: none;')
-    input(type='button', name='playagain', id='playagain', value='Play Again?')
+      span#timersection
+    p
+      span#gamestatus
+    p#gamecontrols(style='display: none;')
+      input(type='button', name='rock', id='rock', value='ROCK!')
+      input(type='button', name='paper', id='paper', value='PAPER!')
+      input(type='button', name='scissors', id='scissors', value='SCISSORS!')
+    p#playagain(style='display: none;')
+      input(type='button', name='playagain', id='playagain', value='Play Again?')
 

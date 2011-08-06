@@ -9,5 +9,14 @@
     "socket.io": "~0.7.7",
     "bcrypt": "~0.2.3",
     "sanitizer": "0.0.14"
+  },
+  "config": {
+    "twitterconsumerkey": "5JsswYI5MCVCkzAqpI9khg",
+    "twitterconsumersecret": "W9f31S5UaHhGzaS6Kxv4qbRTwoZPIs8yvfBdAWsE",
+    "githubappId": "",
+    "githubappSecret": ""
+  },
+  "scripts": {
+    "start": "nodemon app.js"
   }
 }

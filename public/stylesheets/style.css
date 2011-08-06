@@ -23,18 +23,22 @@ a {
   border-color: green;
 }
 
-#timersection {
-  width: 300px;
+/* Play Page */
+
+/* Wrapper */
+#gameareawrapper {
+  width: 800px;
   margin: 0px auto;
-  text-align: center;
+  padding: 0px;
 }
-#gamestatus {
-  width: 300px;
-  margin: 0px auto;
-  text-align: center;
-}
-#gamearea {
-  width: 600px;
+
+/* Player Area 
+   Fills the entire wrapper.
+   There are 2 divs: one for each player
+   Player1's div floats left, Player2's div floats right.
+   */
+#playerarea {
+  width: 800px;
   margin: 0px auto;
 }
 #player1 {
@@ -42,25 +46,45 @@ a {
   float: left;
   text-align: center;
 }
-#player1choice img {
-  width: 300px;
-}
-#player2choice {
-  text-align: right;
-}
-#player2choice img {
-  width: 300px;
-}
 #player2 {
   width: 300px;
   float: right;
   text-align: center;
 }
-#gamecontrols {
+#player1choice img, #player2choice img {
   width: 300px;
+}
+#player2choice {
+  text-align: right;
+}
+
+/* Game Metrics Area */
+/* This is a third layer on top of the other two.
+   Displays the timer as well as any game statuses */
+#gamemetrics {
+  width: 200px;
+  margin: 0px auto;
+  float: left;
+}
+
+#gamecontrols {
+  width: 200px;
   margin: 0px auto;
 }
+
 #playagain {
-  width: 300px;
+  width: 200px;
   margin: 0px auto;
+}
+
+#timersection {
+  width: 200px;
+  margin: 0px auto;
+  text-align: center;
+}
+
+#gamestatus {
+  width: 200px;
+  margin: 0px auto;
+  text-align: center;
 }
