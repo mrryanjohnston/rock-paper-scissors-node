@@ -1,14 +1,14 @@
 h1= title
 p These are the stats, currently. 
-  - if (session.username)
-    a(href='../stats/'+session.username) Your stats 
+  - if (user.displayName)
+    a(href='../stats/'+user.displayName) Your stats 
 table#stats
   tr
     th Name
     th Wins
     th Losses
   tr
-    td #{user.username}
-    td #{user.wins}
-    td #{user.losses}
+    td #{founduser.username}
+    td #{founduser.wins}
+    td #{founduser.losses}
   

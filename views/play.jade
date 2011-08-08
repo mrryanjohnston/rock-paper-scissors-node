@@ -5,12 +5,12 @@ script
     $(function() {
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
-      socket.emit('initial', {'data': '#{session.username}'})
+      socket.emit('initial', {'data': '#{sess.displayName}'})
       
       //When we get a message from the server, we will interpret it and provide
       //the relevant information to the player
       socket.on('wait', function(msg) {
-        $('#player1name').html('#{session.username}')
+        $('#player1name').html('#{sess.displayName}')
         $('#gamestatus').html(msg.data)
         $('#player1choice').html('')
         $('#player2choice').html('')
@@ -47,7 +47,7 @@ script
         socket.emit('choice',{ 'data': 'scissors'});
       });
       $('#playagain').click(function() {
-        socket.emit('initial',{ 'data': '#{session.username}'});
+        socket.emit('initial',{ 'data': '#{sess.displayName}'});
         $('#player1choice').html('')
         $('#player2choice').html('')
         $('#playagain').hide();

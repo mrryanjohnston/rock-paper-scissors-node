@@ -1,7 +1,7 @@
 !!!
 html
   head
-    title= title
+    title title
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
     - if (info.length)
@@ -10,4 +10,9 @@ html
     - if (warn.length)
       #warn
         = warn
+    - if ('undefined' !== typeof errors && errors.length)
+      #warn
+        ul
+        - each error in errors
+          li= error
     != body

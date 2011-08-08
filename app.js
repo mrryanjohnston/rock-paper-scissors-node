@@ -9,7 +9,8 @@ var express      = require('express'),
     sanitizer    = require('sanitizer'),
     everyauth    = require('everyauth'),
     Promise      = everyauth.Promise,
-    mongooseAuth = require('mongoose-auth');
+    mongooseAuth = require('mongoose-auth'),
+    bcrypt       = require('bcrypt');
     
 everyauth.debug = true;
 
@@ -21,7 +22,13 @@ var Schema = mongoose.Schema
 
 
 var User = new Schema({
-    displayName : [String]
+    displayName    : [String]
+    , passwordhash : String
+    , wins         : Number
+    , losses       : Number
+    , rocks        : Number
+    , papers       : Number
+    , scissors     : Number
 });
 
 User.plugin(mongooseAuth, {
@@ -39,18 +46,6 @@ User.plugin(mongooseAuth, {
         , consumerSecret: process.env.npm_package_config_twitterconsumersecret
         , redirectPath: '/'
       }
-    }
-  , password: {
-        everyauth: {
-            getLoginPath: '/login'
-          , postLoginPath: '/login'
-          , loginView: 'login.jade'
-          , getRegisterPath: '/register'
-          , postRegisterPath: '/register'
-          , registerView: 'register.jade'
-          , loginSuccessRedirect: '/'
-          , registerSuccessRedirect: '/'
-        }
     }
   , github: {
       everyauth: {
@@ -78,7 +73,7 @@ app.configure(function(){
   app.use(express.cookieParser());
   app.use(express.session({ secret: 'your secret here' }));
   app.use(mongooseAuth.middleware());
-  app.use(app.router);
+  //app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
 
@@ -97,13 +92,16 @@ app.dynamicHelpers({
   },
   warn: function(req, res){
     return req.flash('warn');
+  },
+  sess: function(req, res){
+    return req.session;
   }
 });
 
 //Route Middleware
 
 function loggedInNotAllowed(req, res, next) {
-  if (req.session.username) {
+  if (req.session.displayName) {
     res.redirect('/');
   } else {
     next();
@@ -111,16 +109,57 @@ function loggedInNotAllowed(req, res, next) {
 }
 
 function loggedOutNotAllowed(req, res, next) {
-  if (!req.session.username) {
+  if (!req.session.displayName) {
     res.redirect('/');
   } else {
     next();
   }
 }
 
+function isdisplayNameTaken(req, res, next) {
+  User.findOne({displayName: req.body.displayName}, function (err, user) {
+    if (err) { throw err; }
+    if (!user) {
+      next();
+    } else {
+      req.flash('warn', 'displayName already taken!');
+      res.redirect('/register');
+    }
+  });
+}
+
+function isPasswordSame(req, res, next) {
+  if (req.body.password === req.body.passwordagain) {
+    next();
+  } else {
+    req.flash('warn', 'Passwords don\'t match!');
+    res.redirect('/register');
+  }
+}
+
+function isCredentialCorrect(req, res, next) {
+  User.findOne({displayName: req.body.displayName}, function (err, user) {
+    if (err) { throw err; }
+    if (user) {
+      bcrypt.compare(req.body.password, user.passwordhash, function(err, passwordIsGood) {
+        if (err) { throw err; }
+        if (passwordIsGood) { //Password is correct
+          next();
+        } else {
+          req.flash('warn', 'Something went wrong. Please try again.');
+          res.redirect('/login');
+        }
+      });
+    } else {
+      req.flash('warn', 'Something went wrong. Please try again.');
+      res.redirect('/login');
+    }
+  });
+}
+
 function userMustHaveDisplayName(req, res, next) {
   if (req.user) {
-    if (req.user.displayName === '') {
+    if (req.user.displayName.length===0) {
       req.flash('info', 'Please choose a display name to display to your enemies in BATTLE!');
       res.redirect('/newuser');
     } else {
@@ -143,22 +182,33 @@ app.get('/newuser', function(req, res){
   res.render('newuser', {
     title: 'Rock, Paper, Scissors, Node!: New User'
   });
+   console.log(req.user.displayName)
+   console.log(req.user._id)
+   console.log(req.user.login)
 });
 
 app.post('/newuser', function(req, res){
   //First, display name must be more than 0 characters.
   if (req.body.displayname.length > 0) {
     //Second, display name should be unique
-    User.find({ displayname: req.body.displayname }, function(err, user) {
+    User.find({ displayName: req.body.displayname }, function(err, user) {
       if (err) {throw err;}
       //If we don't find someone else with this display name
       if (!user.length) {
         //Find this currently logged in user
-        User.findOne({ login: req.user.login }, function(err, user) {
-          user.displayName = req.body.displayname;
-          req.user.displayName = req.body.displayname;
-          req.flash('info', 'Creation of Display Name Successful!');
-          res.redirect('/');
+        User.findById(req.user._id, function(err, user) {
+          console.log(req.user.login);
+          if(err) { throw err; }
+          
+          if (user) console.log('found one!');
+          
+          user.displayName.push(req.body.displayname);
+          req.user.displayName.push(req.body.displayname);
+          user.save(function(err) {
+            if (err) { throw err; }
+            req.flash('info', 'Creation of Display Name Successful!');
+            res.redirect('/');
+          });
         });
       } else {
         req.flash('warn', 'Display name already taken. Try again.');
@@ -171,6 +221,41 @@ app.post('/newuser', function(req, res){
   } //End of display name being more than 0 chars
 });
 
+/*Login Credentials*/
+app.get('/login', loggedInNotAllowed, userMustHaveDisplayName, function(req, res){
+  res.render('login', {
+    title: 'Rock, Paper, Scissors, Node!: Login'
+  });
+});
+
+app.post('/login', loggedInNotAllowed, isCredentialCorrect, function(req, res){
+  req.session.auth = { password: { user: { displayName: req.body.displayName } }, loggedIn: true };
+  req.flash('info', 'Login successful!');
+  res.redirect('/');
+});
+
+app.get('/register', loggedInNotAllowed, function(req, res){
+  res.render('register', {
+    title: 'Rock, Paper, Scissors, Node!: Register'
+  });
+});
+
+app.post('/register', loggedInNotAllowed, isdisplayNameTaken, isPasswordSame, userMustHaveDisplayName, function(req, res){
+  bcrypt.gen_salt(10, function(err, salt) { 
+    if (err) { throw err; }
+    bcrypt.encrypt(req.body.password, salt, function(err, hash) {
+      if (err) { throw err; }
+      var newUser = new User();
+      newUser.displayName  = req.body.displayName;
+      newUser.passwordhash = hash;
+      newUser.save(function (err) {
+        if (err) { throw err; }
+        req.flash('info', 'Registration successful. Please Login!');
+        res.redirect('/login');
+      });
+    });
+  });
+});
 
 app.get('/play', userMustHaveDisplayName, function(req, res){
   res.render('play', {
@@ -179,26 +264,26 @@ app.get('/play', userMustHaveDisplayName, function(req, res){
 });
 
 app.get('/stats', userMustHaveDisplayName, function(req, res){
-  User.find({}).sort('wins', -1).limit(25).execFind(function(err, users) {
+  User.find({}).sort('wins', -1).limit(25).execFind(function(err, foundusers) {
     if (err) { throw err; }
     res.render('stats', {
       title: 'Rock, Paper, Scissors, Node!: Stats',
-      users: users
+      foundusers: foundusers
     });
   });
 });
 
 
-app.get('/stats/:username', userMustHaveDisplayName, function(req, res){
-  User.findOne({username: sanitizer.escape(req.params.username)}, function(err, user) {
+app.get('/stats/:displayName', userMustHaveDisplayName, function(req, res){
+  User.findOne({displayName: sanitizer.escape(req.params.displayName)}, function(err, founduser) {
     if (err) { throw err; }
     if (user) {
       res.render('stats/individualstats', {
         title: 'Rock, Paper, Scissors, Node!: Stats',
-        user: user
+        founduser: founduser
       });
     } else {
-      req.flash('warn', 'No user ' + sanitizer.escape(req.params.username) + ' was found!');
+      req.flash('warn', 'No user ' + sanitizer.escape(req.params.displayName) + ' was found!');
       res.redirect('stats');
     }
   });
@@ -224,21 +309,21 @@ io.sockets.on('connection', function(socket){
     //wait
     if (!Game.player1) {
       Game.player1 = socket
-      socket.username = msg.data
+      socket.displayName = msg.data
       socket.game = Game
       socket.choice = socket.game.player1choice = {} //This will be the player's choice
       socket.emit('wait',{data: 'Waiting for opponent'});
-      console.log(socket.username + ' is player 1');
+      console.log(socket.displayName + ' is player 1');
     } else { //If there is a game, have this player join the game, and then
     //free up the Game variable for the next client pair
       Game.player2 = socket
-      socket.username = msg.data
-      console.log(socket.username + ' is player 2');
+      socket.displayName = msg.data
+      console.log(socket.displayName + ' is player 2');
       socket.game = Game
       socket.choice = socket.game.player2choice = {} //This will be the player's choice
-      socket.emit('join',{data: {player1name: socket.game.player1.username, player2name: socket.game.player2.username}});
+      socket.emit('join',{data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}});
       socket.emit('gamestatus', {data: 'Game is about to begin!'});
-      socket.game.player1.emit('join', {data: {player1name: socket.game.player1.username, player2name: socket.game.player2.username}})
+      socket.game.player1.emit('join', {data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}})
       socket.game.player1.emit('gamestatus', {data: 'Game is about to begin!'})
       
       //Does the timer stuff for the game
@@ -277,7 +362,7 @@ io.sockets.on('connection', function(socket){
                     break;
                   case 'paper':
                     //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
                     //Probably a nicer way to do this
                     self.player2.win = 1
                     self.player2.lose = 0
@@ -286,7 +371,7 @@ io.sockets.on('connection', function(socket){
                     break;
                   case 'scissors':
                     //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -294,7 +379,7 @@ io.sockets.on('connection', function(socket){
                     break;
                   default:
                     //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -307,7 +392,7 @@ io.sockets.on('connection', function(socket){
                 switch (self.player2choice.choice) {
                   case 'rock':
                     //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -325,7 +410,7 @@ io.sockets.on('connection', function(socket){
                   
                   case 'scissors':
                     //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
                     self.player2.win = 1
                     self.player2.lose = 0
                     self.player1.win = 0
@@ -334,7 +419,7 @@ io.sockets.on('connection', function(socket){
                   
                   default:
                     //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -347,7 +432,7 @@ io.sockets.on('connection', function(socket){
                 switch (self.player2choice.choice) {
                   case 'rock':
                     //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
                     self.player2.win = 1
                     self.player2.lose = 0
                     self.player1.win = 0
@@ -356,7 +441,7 @@ io.sockets.on('connection', function(socket){
                   
                   case 'paper':
                     //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -374,7 +459,7 @@ io.sockets.on('connection', function(socket){
                   
                   default:
                     //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.username + ' wins by default! ' + self.player2.username + ' didn\'t choose!'});
+                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
                     self.player1.win = 1
                     self.player1.lose = 0
                     self.player2.win = 0
@@ -395,7 +480,7 @@ io.sockets.on('connection', function(socket){
                      break;
                   default:
                     //Player1 didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player2.username + ' wins by default! ' + self.player1.username + ' didn\'t choose!'});
+                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins by default! ' + self.player1.displayName + ' didn\'t choose!'});
                     self.player2.win = 1
                     self.player2.lose = 0
                     self.player1.win = 0
@@ -405,7 +490,7 @@ io.sockets.on('connection', function(socket){
                 break;
             }
              self.emittoboth('results', { data: {player1choice: socket.game.player1choice.choice, player2choice: socket.game.player2choice.choice}});
-             callback({'username': self.player1.username, 'win': self.player1.win, 'lose': self.player1.lose}, {'username': self.player2.username, 'win': self.player2.win, 'lose': self.player2.lose});
+             callback({'displayName': self.player1.displayName, 'win': self.player1.win, 'lose': self.player1.lose}, {'displayName': self.player2.displayName, 'win': self.player2.win, 'lose': self.player2.lose});
           }
           Game = {}
             
@@ -417,7 +502,7 @@ io.sockets.on('connection', function(socket){
             socket.game.timer(3, socket.game.timer, function() {
               socket.game.determinewinner(function(player1, player2) {
                 //Save the two players here
-                User.findOne({username: player1.username}, function (err, user) {
+                User.findOne({displayName: player1.displayName}, function (err, user) {
                   if (err) { throw err; }
                   if (user) {
                     //Update player1's stats here
@@ -428,7 +513,7 @@ io.sockets.on('connection', function(socket){
                       console.log('saved')
                     });
                   }
-                  User.findOne({username: player2.username}, function (err, user) {
+                  User.findOne({displayName: player2.displayName}, function (err, user) {
                     if (err) { throw err; }
                     if (user) {
                       //Update player2's stats here
@@ -447,7 +532,7 @@ io.sockets.on('connection', function(socket){
         }
       });
       socket.on('choice', function(msg){
-        console.log(socket.username + " chose " + msg.data)
+        console.log(socket.displayName + " chose " + msg.data)
         if (msg.data === 'rock' || msg.data === 'paper' || msg.data === 'scissors') {
           socket.choice.choice = msg.data // come up with a better name for ".choice.choice"
           console.log('and it was accepted.')

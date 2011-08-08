@@ -1,7 +1,4 @@
 h1= title
-p Welcome to #{title}
-  - if (everyauth.loggedIn)
-    , #{everyauth.twitter.user.name}. Oh yeah, and #{everyauth.twitter.displayName}.
 ul
   - if (!everyauth.loggedIn)
     li
@@ -10,7 +7,11 @@ ul
       a(href="/register") Register
     li
       a(href="/auth/twitter") Login with Twitter!
+    li
+      a(href="/auth/github") Login with GitHub!
   - else
+    
+    p Sup, #{everyauth.displayName}.
     li
       a(href="/play") Play!
     li

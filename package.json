@@ -13,8 +13,8 @@
   "config": {
     "twitterconsumerkey": "5JsswYI5MCVCkzAqpI9khg",
     "twitterconsumersecret": "W9f31S5UaHhGzaS6Kxv4qbRTwoZPIs8yvfBdAWsE",
-    "githubappId": "",
-    "githubappSecret": ""
+    "githubappId": "a467cbabcba6a51f6da2",
+    "githubappSecret": "d5112e00a0cd7e54efdb6cec91f0c0f98a080973"
   },
   "scripts": {
     "start": "nodemon app.js"
