@@ -1,14 +1,11 @@
-h1 title
-p Please enter your credentials below to register (Display Name less than 16 characters, please!):
-form(name='register', id='register', method='post', action='register')
-  #displayName
-    p Display Name
-      input(type='text', name='displayName')
+h1 Register
+p I won't spam your email, blah blah blah.
+form(action='/register', method='POST')
+  #email
+    label(for=everyauth.password.loginFormFieldName) Email
+    input(type='text', name=everyauth.password.loginFormFieldName, value=userParams[everyauth.password.loginFormFieldName])
   #password
-    p Password
-      input(type='text', name='password')
-  #passwordagain
-    p Password again
-      input(type='text', name='passwordagain')
+    label(for=everyauth.password.passwordFormFieldName) Password
+    input(type='password', name=everyauth.password.passwordFormFieldName)
   #submit
     input(type='submit') Register

@@ -1,12 +1,10 @@
-h1 title
-p Note: Please use less than 20 characters for your Display Name
-p Please login below:
-form(name='login', id='login', method='post', action='login')
+h1 Login
+form(action='/login', method='POST')
   #login
-    p Display Name
-      input(type='text', name='displayName')
+    label(for=everyauth.password.loginFormFieldName) Email
+    input(type='text', name=everyauth.password.loginFormFieldName, value=email)
   #password
-    p Password
-      input(type='text', name='password')
+    label(for=everyauth.password.passwordFormFieldName) Password
+    input(type='password', name=everyauth.password.passwordFormFieldName)
   #submit
     input(type='submit') Login

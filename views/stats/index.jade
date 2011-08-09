@@ -1,7 +1,7 @@
 h1= title
 p These are the stats, currently. 
-  - if (user || sess.displayName)
-    a(href='../stats/'+user.displayName||sess.displayName) Your stats 
+  - if (user)
+    a(href='../stats/'+user.displayName) Your stats 
 table#stats
   tr
     th Name

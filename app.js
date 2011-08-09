@@ -10,7 +10,8 @@ var express      = require('express'),
     everyauth    = require('everyauth'),
     Promise      = everyauth.Promise,
     mongooseAuth = require('mongoose-auth'),
-    bcrypt       = require('bcrypt');
+    bcrypt       = require('bcrypt'),
+    conf         = require('./conf');
     
 everyauth.debug = true;
 
@@ -23,7 +24,6 @@ var Schema = mongoose.Schema
 
 var User = new Schema({
     displayName    : [String]
-    , passwordhash : String
     , wins         : Number
     , losses       : Number
     , rocks        : Number
@@ -39,19 +39,32 @@ User.plugin(mongooseAuth, {
           }
       }
     }
+  , password: {
+        loginWith: 'email'
+      , everyauth: {
+            getLoginPath: '/login'
+          , postLoginPath: '/login'
+          , loginView: 'login.jade'
+          , getRegisterPath: '/register'
+          , postRegisterPath: '/register'
+          , registerView: 'register.jade'
+          , loginSuccessRedirect: '/'
+          , registerSuccessRedirect: '/'
+        }
+    }
   , twitter: {
       everyauth: {
           myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-        , consumerKey: process.env.npm_package_config_twitterconsumerkey
-        , consumerSecret: process.env.npm_package_config_twitterconsumersecret
+        , consumerKey: conf.twit.consumerKey
+        , consumerSecret: conf.twit.consumerSecret
         , redirectPath: '/'
       }
     }
   , github: {
       everyauth: {
           myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-        , appId: process.env.npm_package_config_githubappId
-        , appSecret: process.env.npm_package_config_githubappSecret
+        , appId: conf.github.appId
+        , appSecret: conf.github.appSecret
         , redirectPath: '/'
       }
     }
@@ -93,9 +106,6 @@ app.dynamicHelpers({
   warn: function(req, res){
     return req.flash('warn');
   },
-  sess: function(req, res){
-    return req.session;
-  }
 });
 
 //Route Middleware
@@ -128,35 +138,6 @@ function isdisplayNameTaken(req, res, next) {
   });
 }
 
-function isPasswordSame(req, res, next) {
-  if (req.body.password === req.body.passwordagain) {
-    next();
-  } else {
-    req.flash('warn', 'Passwords don\'t match!');
-    res.redirect('/register');
-  }
-}
-
-function isCredentialCorrect(req, res, next) {
-  User.findOne({displayName: req.body.displayName}, function (err, user) {
-    if (err) { throw err; }
-    if (user) {
-      bcrypt.compare(req.body.password, user.passwordhash, function(err, passwordIsGood) {
-        if (err) { throw err; }
-        if (passwordIsGood) { //Password is correct
-          next();
-        } else {
-          req.flash('warn', 'Something went wrong. Please try again.');
-          res.redirect('/login');
-        }
-      });
-    } else {
-      req.flash('warn', 'Something went wrong. Please try again.');
-      res.redirect('/login');
-    }
-  });
-}
-
 function userMustHaveDisplayName(req, res, next) {
   if (req.user) {
     if (req.user.displayName.length===0) {
@@ -182,9 +163,6 @@ app.get('/newuser', function(req, res){
   res.render('newuser', {
     title: 'Rock, Paper, Scissors, Node!: New User'
   });
-   console.log(req.user.displayName)
-   console.log(req.user._id)
-   console.log(req.user.login)
 });
 
 app.post('/newuser', function(req, res){
@@ -197,10 +175,8 @@ app.post('/newuser', function(req, res){
       if (!user.length) {
         //Find this currently logged in user
         User.findById(req.user._id, function(err, user) {
-          console.log(req.user.login);
+
           if(err) { throw err; }
-          
-          if (user) console.log('found one!');
           
           user.displayName.push(req.body.displayname);
           req.user.displayName.push(req.body.displayname);
@@ -221,42 +197,6 @@ app.post('/newuser', function(req, res){
   } //End of display name being more than 0 chars
 });
 
-/*Login Credentials*/
-app.get('/login', loggedInNotAllowed, userMustHaveDisplayName, function(req, res){
-  res.render('login', {
-    title: 'Rock, Paper, Scissors, Node!: Login'
-  });
-});
-
-app.post('/login', loggedInNotAllowed, isCredentialCorrect, function(req, res){
-  req.session.auth = { password: { user: { displayName: req.body.displayName } }, loggedIn: true };
-  req.flash('info', 'Login successful!');
-  res.redirect('/');
-});
-
-app.get('/register', loggedInNotAllowed, function(req, res){
-  res.render('register', {
-    title: 'Rock, Paper, Scissors, Node!: Register'
-  });
-});
-
-app.post('/register', loggedInNotAllowed, isdisplayNameTaken, isPasswordSame, userMustHaveDisplayName, function(req, res){
-  bcrypt.gen_salt(10, function(err, salt) { 
-    if (err) { throw err; }
-    bcrypt.encrypt(req.body.password, salt, function(err, hash) {
-      if (err) { throw err; }
-      var newUser = new User();
-      newUser.displayName  = req.body.displayName;
-      newUser.passwordhash = hash;
-      newUser.save(function (err) {
-        if (err) { throw err; }
-        req.flash('info', 'Registration successful. Please Login!');
-        res.redirect('/login');
-      });
-    });
-  });
-});
-
 app.get('/play', userMustHaveDisplayName, function(req, res){
   res.render('play', {
     title: 'Rock, Paper, Scissors, Node!: Play'
@@ -266,18 +206,25 @@ app.get('/play', userMustHaveDisplayName, function(req, res){
 app.get('/stats', userMustHaveDisplayName, function(req, res){
   User.find({}).sort('wins', -1).limit(25).execFind(function(err, foundusers) {
     if (err) { throw err; }
-    res.render('stats', {
-      title: 'Rock, Paper, Scissors, Node!: Stats',
-      foundusers: foundusers
-    });
+    if (foundusers) {
+      res.render('stats', {
+        title: 'Rock, Paper, Scissors, Node!: Stats',
+        foundusers: foundusers
+      });
+    } else {
+      req.flash('warn', 'No users found! Yet... ');
+      res.redirect('/');
+    }
   });
 });
 
 
 app.get('/stats/:displayName', userMustHaveDisplayName, function(req, res){
-  User.findOne({displayName: sanitizer.escape(req.params.displayName)}, function(err, founduser) {
+  //Work around for the way mongoose-auth does parameters added to the schema
+  var userArray = [sanitizer.escape(req.params.displayName)];
+  User.findOne({displayName: userArray}, function(err, founduser) {
     if (err) { throw err; }
-    if (user) {
+    if (founduser) {
       res.render('stats/individualstats', {
         title: 'Rock, Paper, Scissors, Node!: Stats',
         founduser: founduser

@@ -1,6 +1,6 @@
 h1= title
 p These are the stats, currently. 
-  - if (user.displayName)
+  - if (everyauth.loggedIn)
     a(href='../stats/'+user.displayName) Your stats 
 table#stats
   tr
@@ -8,7 +8,7 @@ table#stats
     th Wins
     th Losses
   tr
-    td #{founduser.username}
+    td #{founduser.displayName}
     td #{founduser.wins}
     td #{founduser.losses}
   
