@@ -10,7 +10,6 @@ var express      = require('express'),
     everyauth    = require('everyauth'),
     Promise      = everyauth.Promise,
     mongooseAuth = require('mongoose-auth'),
-    bcrypt       = require('bcrypt'),
     conf         = require('./conf');
     
 everyauth.debug = true;
