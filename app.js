@@ -4,7 +4,6 @@
 
 var express      = require('express'),
     mongoose     = require('mongoose'),
-    bcrypt       = require('bcrypt'),
     User,
     sanitizer    = require('sanitizer'),
     everyauth    = require('everyauth'),
