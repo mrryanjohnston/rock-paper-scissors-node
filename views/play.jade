@@ -5,36 +5,45 @@ script
     $(function() {
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
-      socket.emit('initial', {'data': '#{sess.displayName}'})
+      socket.emit('initial', {'data': '#{user.displayName}'})
       
       //When we get a message from the server, we will interpret it and provide
       //the relevant information to the player
       socket.on('wait', function(msg) {
-        $('#player1name').html('#{sess.displayName}')
+        $('#player1name').html('#{user.displayName}')
         $('#gamestatus').html(msg.data)
-        $('#player1choice').html('')
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
         $('#player2choice').html('')
         $('#player2name').html('')
       });
       socket.on('join', function(msg) {
         $('#player1name').html(msg.data.player1name)
         $('#player2name').html(msg.data.player2name)
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
+        $('#player2choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
       });
       socket.on('timer', function(msg) {
-        $('#timersection').html(msg.data)
+        $('#timersection').html(msg.data);
+        if (($('input#alert').is(':checked'))) { //If the checkbox is enabled, play the alert sound with each tick
+          $('#soundarea').html('<embed src="/sounds/boop.wav" hidden="true" autostart="true" loop="false">');
+        }
       });
       socket.on('gamestatus', function(msg) {
         $('#gamestatus').html(msg.data)
       });
+      socket.on('initialchoice', function(msg) { //This is when the player makes initial choice.
+        $(msg.data.playerchoicediv).html('<img src="/images/'+msg.data.playerchoice+'.png" alt="'+msg.data.playerchoice+'"/>');
+      });
       socket.on('results', function(msg) {
         $('#gamecontrols').hide();
-        $('#playagain').show();
+        $('#playagainarea').show();
         $('#player1choice').html('<img src="/images/'+msg.data.player1choice+'.png" alt="'+msg.data.player1choice+'"/>')
         $('#player2choice').html('<img src="/images/'+msg.data.player2choice+'.png" alt="'+msg.data.player2choice+'"/>')
       });
       socket.on('choose', function(msg) {
         $('#gamecontrols').show();
       });
+      
 
       //Button Clicks
       $('#rock').click(function() {
@@ -47,34 +56,42 @@ script
         socket.emit('choice',{ 'data': 'scissors'});
       });
       $('#playagain').click(function() {
-        socket.emit('initial',{ 'data': '#{sess.displayName}'});
-        $('#player1choice').html('')
+        socket.emit('initial',{ 'data': '#{user.displayName}'});
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
         $('#player2choice').html('')
-        $('#playagain').hide();
+        $('#playagainarea').hide();
       });
     });
 h1= title
 #gameareawrapper
   #playerareawrapper
     #player1
-      h3 
-        span#player1name
-      p
-        span#player1choice
+      #player1namearea
+        h3
+          span#player1name
+      #player1picturearea
+        #player1choice
     #player2
-      h3
-        span#player2name
-      p 
-        span#player2choice
+      #player2namearea
+        h3
+          span#player2name
+      #player2picturearea
+        #player2choice
   #gamemetrics
     p
       span#timersection
     p
       span#gamestatus
-    p#gamecontrols(style='display: none;')
-      input(type='button', name='rock', id='rock', value='ROCK!')
-      input(type='button', name='paper', id='paper', value='PAPER!')
-      input(type='button', name='scissors', id='scissors', value='SCISSORS!')
-    p#playagain(style='display: none;')
+    #gamecontrols
+      #rock
+        img(src='images/rocksmall.png')
+      #paper
+        img(src='images/papersmall.png')
+      #scissors
+        img(src='images/scissorssmall.png')
+    #playagainarea
       input(type='button', name='playagain', id='playagain', value='Play Again?')
-
+#soundcheckbox
+  input(type='checkbox', name='alert', id='alert')
+  span Turn alert sound on (may require browser plugins!)
+#soundarea

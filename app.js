@@ -23,12 +23,12 @@ var Schema = mongoose.Schema
 
 
 var User = new Schema({
-    displayName    : [String]
-    , wins         : Number
-    , losses       : Number
-    , rocks        : Number
-    , papers       : Number
-    , scissors     : Number
+    displayName    : {type: String, default: null}
+    , wins         : {type: Number, default: 0}
+    , losses       : {type: Number, default: 0}
+    , rocks        : {type: Number, default: 0}
+    , papers       : {type: Number, default: 0}
+    , scissors     : {type: Number, default: 0}
 });
 
 User.plugin(mongooseAuth, {
@@ -86,7 +86,7 @@ app.configure(function(){
   app.use(express.cookieParser());
   app.use(express.session({ secret: 'your secret here' }));
   app.use(mongooseAuth.middleware());
-  //app.use(app.router);
+  app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
 
@@ -140,7 +140,7 @@ function isdisplayNameTaken(req, res, next) {
 
 function userMustHaveDisplayName(req, res, next) {
   if (req.user) {
-    if (req.user.displayName.length===0) {
+    if (!req.user.displayName) {
       req.flash('info', 'Please choose a display name to display to your enemies in BATTLE!');
       res.redirect('/newuser');
     } else {
@@ -178,8 +178,8 @@ app.post('/newuser', function(req, res){
 
           if(err) { throw err; }
           
-          user.displayName.push(req.body.displayname);
-          req.user.displayName.push(req.body.displayname);
+          user.displayName = req.body.displayname;
+          req.user.displayName = req.body.displayname;
           user.save(function(err) {
             if (err) { throw err; }
             req.flash('info', 'Creation of Display Name Successful!');
@@ -220,9 +220,7 @@ app.get('/stats', userMustHaveDisplayName, function(req, res){
 
 
 app.get('/stats/:displayName', userMustHaveDisplayName, function(req, res){
-  //Work around for the way mongoose-auth does parameters added to the schema
-  var userArray = [sanitizer.escape(req.params.displayName)];
-  User.findOne({displayName: userArray}, function(err, founduser) {
+  User.findOne({displayName: sanitizer.escape(req.params.displayName)}, function(err, founduser) {
     if (err) { throw err; }
     if (founduser) {
       res.render('stats/individualstats', {
@@ -248,13 +246,14 @@ var Game = {}
 io.sockets.on('connection', function(socket){
   //First off, we can grab their name from a socket emission
   socket.on('initial', function(msg){
-    console.log('User ' + socket.sessionId + ' has connected as ' + msg.data);
+    console.log('User ' + socket.id + ' has connected as ' + msg.data);
     /////
     //Game Initialization
     /////
     //If there isn't a game already, create one, then tell the client to
     //wait
-    if (!Game.player1) {
+    //Or, if player1 hits refresh, just put them back to the Game.player1 property
+    if (!Game.player1 || Game.player1.displayName===msg.data) {
       Game.player1 = socket
       socket.displayName = msg.data
       socket.game = Game
@@ -452,22 +451,23 @@ io.sockets.on('connection', function(socket){
                 User.findOne({displayName: player1.displayName}, function (err, user) {
                   if (err) { throw err; }
                   if (user) {
+                    console.log(user)
                     //Update player1's stats here
-                    user.wins += player1.win
-                    user.losses += player1.lose
+                    user.wins += player1.win;
+                    user.losses += player1.lose;
                     user.save(function (err) {
-                    if (err) { throw err; }
-                      console.log('saved')
+                      if (err) { throw err; }
+                      console.log('saved');
                     });
                   }
                   User.findOne({displayName: player2.displayName}, function (err, user) {
                     if (err) { throw err; }
                     if (user) {
                       //Update player2's stats here
-                      user.wins += player2.win
-                      user.losses += player2.lose
+                      user.wins += player2.win;
+                      user.losses += player2.lose;
                       user.save(function (err) {
-                       if (err) { throw err; }
+                        if (err) { throw err; }
                         console.log('saved')
                       });
                     }
@@ -483,6 +483,12 @@ io.sockets.on('connection', function(socket){
         if (msg.data === 'rock' || msg.data === 'paper' || msg.data === 'scissors') {
           socket.choice.choice = msg.data // come up with a better name for ".choice.choice"
           console.log('and it was accepted.')
+          //Send it back to the user for display purposes
+          if (socket===socket.game.player1) {
+            socket.emit('initialchoice', { data: { playerchoicediv: '#player1choice', playerchoice: msg.data } });
+          } else {
+            socket.emit('initialchoice', { data: { playerchoicediv: '#player2choice', playerchoice: msg.data } });
+          }
         }
       });
   socket.on('disconnect', function(){  })
