@@ -52,7 +52,8 @@ User.plugin(mongooseAuth, {
     }
   , twitter: {
       everyauth: {
-          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          //myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          myHostname: 'http://24.3.186.62:3000'
         , consumerKey: conf.twit.consumerKey
         , consumerSecret: conf.twit.consumerSecret
         , redirectPath: '/'
@@ -60,7 +61,8 @@ User.plugin(mongooseAuth, {
     }
   , github: {
       everyauth: {
-          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          //myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          myHostname: 'http://24.3.186.62:3000'
         , appId: conf.github.appId
         , appSecret: conf.github.appSecret
         , redirectPath: '/'
@@ -149,6 +151,18 @@ function userMustHaveDisplayName(req, res, next) {
   }
 }
 
+function userCannotHaveDisplayName(req, res, next) {
+  if (req.user) {
+    if (req.user.displayName) {
+      res.redirect('/');
+    } else {
+      next();
+    }
+  } else {
+    res.redirect('/');
+  }
+}
+
 // Routes
 
 app.get('/', userMustHaveDisplayName, function(req, res){
@@ -157,13 +171,13 @@ app.get('/', userMustHaveDisplayName, function(req, res){
   });
 });
 
-app.get('/newuser', userCannotBeLoggedIn, function(req, res){
+app.get('/newuser', userCannotHaveDisplayName, function(req, res){
   res.render('newuser', {
     title: 'Rock, Paper, Scissors, Node!: New User'
   });
 });
 
-app.post('/newuser', userCannotBeLoggedIn, function(req, res){
+app.post('/newuser', userCannotHaveDisplayName, function(req, res){
   //First, display name must be more than 0 characters.
   if (req.body.displayname.length > 0) {
     //Second, display name should be unique
