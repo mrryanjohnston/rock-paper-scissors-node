@@ -111,15 +111,15 @@ app.dynamicHelpers({
 //Route Middleware
 
 function loggedInNotAllowed(req, res, next) {
-  if (req.session.displayName) {
+  if (req.loggedIn) {
     res.redirect('/');
   } else {
     next();
   }
 }
 
-function loggedOutNotAllowed(req, res, next) {
-  if (!req.session.displayName) {
+function userMustBeLoggedIn(req, res, next) {
+  if (!req.loggedIn) {
     res.redirect('/');
   } else {
     next();
@@ -197,7 +197,7 @@ app.post('/newuser', function(req, res){
   } //End of display name being more than 0 chars
 });
 
-app.get('/play', userMustHaveDisplayName, function(req, res){
+app.get('/play', userMustHaveDisplayName, userMustBeLoggedIn, function(req, res){
   res.render('play', {
     title: 'Rock, Paper, Scissors, Node!: Play'
   });

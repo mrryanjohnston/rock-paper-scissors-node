@@ -25,7 +25,7 @@ script
       socket.on('timer', function(msg) {
         $('#timersection').html(msg.data);
         if (($('input#alert').is(':checked'))) { //If the checkbox is enabled, play the alert sound with each tick
-          $('#soundarea').html('<embed src="/sounds/boop.wav" hidden="true" autostart="true" loop="false">');
+          $('#soundarea').html('<object><param name="autostart" value="true"><param name="src" value="/sounds/boop.mp3"><param name="autoplay" value="true"><param name="controller" value="false"><embed src="/sounds/boop.mp3" controller="false" autoplay="true" autostart="True" hidden="true" type="audio/mpeg" /></object>');
         }
       });
       socket.on('gamestatus', function(msg) {
