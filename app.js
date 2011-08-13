@@ -110,7 +110,7 @@ app.dynamicHelpers({
 
 //Route Middleware
 
-function loggedInNotAllowed(req, res, next) {
+function userCannotBeLoggedIn(req, res, next) {
   if (req.loggedIn) {
     res.redirect('/');
   } else {
@@ -159,13 +159,13 @@ app.get('/', userMustHaveDisplayName, function(req, res){
   });
 });
 
-app.get('/newuser', function(req, res){
+app.get('/newuser', userCannotBeLoggedIn, function(req, res){
   res.render('newuser', {
     title: 'Rock, Paper, Scissors, Node!: New User'
   });
 });
 
-app.post('/newuser', function(req, res){
+app.post('/newuser', userCannotBeLoggedIn, function(req, res){
   //First, display name must be more than 0 characters.
   if (req.body.displayname.length > 0) {
     //Second, display name should be unique
