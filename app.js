@@ -4,12 +4,13 @@
 
 var express      = require('express'),
     mongoose     = require('mongoose'),
-    User,
     sanitizer    = require('sanitizer'),
     everyauth    = require('everyauth'),
-    Promise      = everyauth.Promise,
     mongooseAuth = require('mongoose-auth'),
-    conf         = require('./conf');
+    cron         = require('cron'),
+    conf         = require('./conf'),
+    Promise      = everyauth.Promise,
+    User;
     
 everyauth.debug = true;
 
@@ -19,7 +20,7 @@ var app = module.exports = express.createServer(),
 var Schema = mongoose.Schema
 , ObjectId = mongoose.SchemaTypes.ObjectId;
 
-
+/*Database stuff*/
 var User = new Schema({
     displayName    : {type: String, default: null}
     , wins         : {type: Number, default: 0}
@@ -52,8 +53,8 @@ User.plugin(mongooseAuth, {
     }
   , twitter: {
       everyauth: {
-          //myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-          myHostname: 'http://24.3.186.62:3000'
+          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          //myHostname: 'http://24.3.186.62:3000'
         , consumerKey: conf.twit.consumerKey
         , consumerSecret: conf.twit.consumerSecret
         , redirectPath: '/'
@@ -61,8 +62,8 @@ User.plugin(mongooseAuth, {
     }
   , github: {
       everyauth: {
-          //myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-          myHostname: 'http://24.3.186.62:3000'
+          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
+          //myHostname: 'http://24.3.186.62:3000'
         , appId: conf.github.appId
         , appSecret: conf.github.appSecret
         , redirectPath: '/'
@@ -73,7 +74,7 @@ User.plugin(mongooseAuth, {
 mongoose.model('User', User);
 mongoose.connect('mongodb://localhost/db');
 User = mongoose.model('User');
-  
+/*End Database Stuff*/
     
 
 // Configuration
@@ -107,6 +108,20 @@ app.dynamicHelpers({
     return req.flash('warn');
   },
 });
+
+/*Cron Stuff*/
+
+new cronCronJob('0 0 0 ? * MON,TUE,WED,THU,FRI,SUN *', function() {
+  //Reset the number of "round plays" to 10.
+});
+
+new cronCronJob('0 0 0 ? * SAT *', function() {
+  //Compare everyone's round score, declare 1st, 2nd, 3rd places,
+  //add these counts to player's db entries
+});
+
+
+/*End Cron Stuff*/
 
 //Route Middleware
 
