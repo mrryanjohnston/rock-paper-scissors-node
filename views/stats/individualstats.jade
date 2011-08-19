@@ -1,14 +1,21 @@
 h1= title
 p These are the stats, currently. 
   - if (everyauth.loggedIn)
-    a(href='../stats/'+user.displayName) Your stats 
-table#stats
-  tr
-    th Name
-    th Wins
-    th Losses
-  tr
-    td #{founduser.displayName}
-    td #{founduser.wins}
-    td #{founduser.losses}
-  
+#userwrapper
+  h2#name= founduser.displayName
+  #avatararea
+    img(src='../images/avatars/'+founduser.avatar)
+  #overallstatsarea
+    h3#titleofchart Total Wins/Losses
+    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.wins+','+founduser.losses+'&chdl=Wins: '+founduser.wins+'|Losses: '+founduser.losses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.wins+' Wins, '+founduser.losses+' Losses')
+  #individualstatsarea
+    table#stats
+      tr
+        th Round Wins
+        th Round Losses
+        th Round Plays Left
+      tr
+        td #{founduser.roundwins}
+        td #{founduser.roundlosses}
+        td #{founduser.roundplays}
+    

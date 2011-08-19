@@ -23,11 +23,18 @@ var Schema = mongoose.Schema
 /*Database stuff*/
 var User = new Schema({
     displayName    : {type: String, default: null}
+    , avatar       : {type: String, default: 'avatardefault.png'}
     , wins         : {type: Number, default: 0}
     , losses       : {type: Number, default: 0}
     , rocks        : {type: Number, default: 0}
     , papers       : {type: Number, default: 0}
     , scissors     : {type: Number, default: 0}
+    , roundfirsts  : {type: Number, default: 0}
+    , roundseconds : {type: Number, default: 0}
+    , roundthirds  : {type: Number, default: 0}
+    , roundwins    : {type: Number, default: 0}
+    , roundlosses  : {type: Number, default: 0}
+    , roundplays   : {type: Number, default: 10} //This is DAILY, rather than round-wide
 });
 
 User.plugin(mongooseAuth, {
@@ -53,8 +60,8 @@ User.plugin(mongooseAuth, {
     }
   , twitter: {
       everyauth: {
-          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-          //myHostname: 'http://24.3.186.62:3000'
+          myHostname: 'http://dev.rpsnode.nodejitsu.com:3000'
+          //myHostname: 'http://rpsnode.nodejitsu.com'
         , consumerKey: conf.twit.consumerKey
         , consumerSecret: conf.twit.consumerSecret
         , redirectPath: '/'
@@ -62,8 +69,8 @@ User.plugin(mongooseAuth, {
     }
   , github: {
       everyauth: {
-          myHostname: 'http://dev.rockpaperscissors.nodester.com:3000'
-          //myHostname: 'http://24.3.186.62:3000'
+          myHostname: 'http://dev.rpsnode.nodejitsu.com:3000'
+          //myHostname: 'http://rpsnode.nodejitsu.com'
         , appId: conf.github.appId
         , appSecret: conf.github.appSecret
         , redirectPath: '/'
@@ -76,6 +83,96 @@ mongoose.connect('mongodb://localhost/db');
 User = mongoose.model('User');
 /*End Database Stuff*/
     
+/*Cron Stuff*/
+//Sunday-Friday
+//TODO: Do this as a callback
+new cron.CronJob('0 0 0 * * 1-6', function() {
+  //Reset the number of "round plays" to 10.
+  User.find({}, function (err, users) {
+    //Each user
+    users.forEach(function(user) {
+      user.roundplays = 10;
+      user.save(function(err) {
+        if (err) { throw err; }
+      });
+    });
+  });
+});
+
+//Saturday
+new cron.CronJob('0 0 0 * * 7', function() {
+  User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
+    var place = -1;
+    var places = ['roundfirsts', 'roundseconds', 'roundthirds'];
+    foundusers.forEach(function(user) {
+      user[places[++place]]++;
+      user.save(function(err) {
+        //if this is the last time we have to award a player, then FLUSH THE ROUND
+        if (place===foundusers.length-1) {
+          User.find({}, function (err, users) {
+            //Each user
+            users.forEach(function(user) {
+              user.roundplays  = 0;
+              user.roundwins   = 0;
+              user.roundlosses = 0;
+              user.save(function(err) {
+                if (err) { throw err; }
+              });
+            });
+          });
+        }
+      });
+      //Award each of these guys one 1st, one 2nd, one 3rd respectively
+      //Compare everyone's round score, declare 1st, 2nd, 3rd places,
+      //add these counts to player's db entries
+      
+
+    });
+  });
+});
+
+
+//Test
+/*new cron.CronJob('*6 * * * * *', function() {
+  User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
+    var place = -1;
+    var places = ['roundfirsts', 'roundseconds', 'roundthirds'];
+    foundusers.forEach(function(user) {
+      //Alright, so, sorry about this one, but:
+      //Increase the document's property equal to user.'whatever place', where
+      //'whatever place' is determined from the value of place increased by 1
+      //as an index of the places array
+      console.log(place);
+      console.log(user);
+      user[places[++place]]++;
+      console.log(place);
+      user.save(function(err) {
+        //if this is the last time we have to award a player, then FLUSH THE ROUND
+        if (place===foundusers.length-1) {
+          User.find({}, function (err, users) {
+            //Each user
+            users.forEach(function(user) {
+              user.roundplays  = 0;
+              user.roundwins   = 0;
+              user.roundlosses = 0;
+              user.save(function(err) {
+                if (err) { throw err; }
+              });
+            });
+          });
+        }
+      });
+      //Award each of these guys one 1st, one 2nd, one 3rd respectively
+      //Compare everyone's round score, declare 1st, 2nd, 3rd places,
+      //add these counts to player's db entries
+      
+
+    });
+  });
+});*/
+
+
+/*End Cron Stuff*/
 
 // Configuration
 
@@ -108,20 +205,6 @@ app.dynamicHelpers({
     return req.flash('warn');
   },
 });
-
-/*Cron Stuff*/
-
-new cronCronJob('0 0 0 ? * MON,TUE,WED,THU,FRI,SUN *', function() {
-  //Reset the number of "round plays" to 10.
-});
-
-new cronCronJob('0 0 0 ? * SAT *', function() {
-  //Compare everyone's round score, declare 1st, 2nd, 3rd places,
-  //add these counts to player's db entries
-});
-
-
-/*End Cron Stuff*/
 
 //Route Middleware
 
@@ -207,11 +290,25 @@ app.post('/newuser', userCannotHaveDisplayName, function(req, res){
           
           user.displayName = req.body.displayname;
           req.user.displayName = req.body.displayname;
-          user.save(function(err) {
-            if (err) { throw err; }
-            req.flash('info', 'Creation of Display Name Successful!');
-            res.redirect('/');
-          });
+          
+          //If today is not Saturday, turn roundplays to 10
+          if ((new Date().getDay) !== 6) {
+            user.roundplays = 10;
+            user.save(function(err) {
+              if (err) { throw err; }
+              req.flash('info', 'Creation of Display Name Successful!');
+              res.redirect('/');
+            });
+          } else { //If today is something other than Saturday
+            user.save(function(err) {
+              if (err) { throw err; }
+              req.flash('info', 'Creation of Display Name Successful!');
+              res.redirect('/');
+            });
+          }
+          
+          
+          
         });
       } else {
         req.flash('warn', 'Display name already taken. Try again.');
@@ -274,236 +371,299 @@ io.sockets.on('connection', function(socket){
   //First off, we can grab their name from a socket emission
   socket.on('initial', function(msg){
     console.log('User ' + socket.id + ' has connected as ' + msg.data);
-    /////
-    //Game Initialization
-    /////
-    //If there isn't a game already, create one, then tell the client to
-    //wait
-    //Or, if player1 hits refresh, just put them back to the Game.player1 property
-    if (!Game.player1 || Game.player1.displayName===msg.data) {
-      Game.player1 = socket
-      socket.displayName = msg.data
-      socket.game = Game
-      socket.choice = socket.game.player1choice = {} //This will be the player's choice
-      socket.emit('wait',{data: 'Waiting for opponent'});
-      console.log(socket.displayName + ' is player 1');
-    } else { //If there is a game, have this player join the game, and then
-    //free up the Game variable for the next client pair
-      Game.player2 = socket
-      socket.displayName = msg.data
-      console.log(socket.displayName + ' is player 2');
-      socket.game = Game
-      socket.choice = socket.game.player2choice = {} //This will be the player's choice
-      socket.emit('join',{data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}});
-      socket.emit('gamestatus', {data: 'Game is about to begin!'});
-      socket.game.player1.emit('join', {data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}})
-      socket.game.player1.emit('gamestatus', {data: 'Game is about to begin!'})
-      
-      //Does the timer stuff for the game
-      socket.game.timer = function(seconds, callback, next) {
-        var self = this;
-        self.player1.emit('timer', {data: seconds})
-        self.player2.emit('timer', {data: seconds})
-        if (seconds === 0) {
-          next.call(self);
-        } else {
-            setTimeout(function() {
-              callback.call(self, --seconds, callback, next);
-            }, 1000);
-        }
-      }
-      
-      //Emits to both players
-      socket.game.emittoboth = function(msg, data) {
-        self = this
-        self.player1.emit(msg, data);
-        self.player2.emit(msg, data);
-      }
-      
-      //Determines the winner of the game
-      socket.game.determinewinner = function(callback) {
-            switch (self.player1choice.choice) {
-              case 'rock':
-                switch (self.player2choice.choice) {
-                  case 'rock':
-                    //Tie. Reshoot
-                    self.emittoboth('gamestatus', { data: 'Tie! Reshoot in 5 seconds!'});
-                    self.player2.win = 0
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 0
-                    break;
-                  case 'paper':
-                    //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
-                    //Probably a nicer way to do this
-                    self.player2.win = 1
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 1
-                    break;
-                  case 'scissors':
-                    //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                  default:
-                    //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                }
-                break;
-              
-              case 'paper':
-                switch (self.player2choice.choice) {
-                  case 'rock':
-                    //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                  
-                  case 'paper':
-                    //Tie. Reshoot
-                    self.emittoboth('gamestatus', { data: 'Tie! You are awarded no points!'});
-                    self.player2.win = 0
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 0
-                    break;
-                  
-                  case 'scissors':
-                    //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
-                    self.player2.win = 1
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 1
-                    break;
-                  
-                  default:
-                    //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                }
-                break;
-              
-              case 'scissors':
-                switch (self.player2choice.choice) {
-                  case 'rock':
-                    //Player1 loses
-                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
-                    self.player2.win = 1
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 1
-                    break;
-                  
-                  case 'paper':
-                    //Player1 wins
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                  
-                  case 'scissors':
-                    //Tie. Reshoot
-                    self.emittoboth('gamestatus', { data: 'Tie! Reshoot in 5 seconds!'});
-                    self.player2.win = 0
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 0
-                    break;
-                  
-                  default:
-                    //Opponent didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
-                    self.player1.win = 1
-                    self.player1.lose = 0
-                    self.player2.win = 0
-                    self.player2.lose = 1
-                    break;
-                }
-                break;
-              default:
-                //This client didn't make a choice
-                switch (self.player2choice.choice) {
-                  case undefined:
-                    //Neither player made a choice
-                     self.emittoboth('gamestatus', { data: 'No one wins! Neither chose!'});
-                     self.player2.win = 0
-                     self.player2.lose = 1
-                     self.player1.win = 0
-                     self.player1.lose = 1
-                     break;
-                  default:
-                    //Player1 didn't make a choice
-                    self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins by default! ' + self.player1.displayName + ' didn\'t choose!'});
-                    self.player2.win = 1
-                    self.player2.lose = 0
-                    self.player1.win = 0
-                    self.player1.lose = 1
-                    break;
-                }
-                break;
-            }
-             self.emittoboth('results', { data: {player1choice: socket.game.player1choice.choice, player2choice: socket.game.player2choice.choice}});
-             callback({'displayName': self.player1.displayName, 'win': self.player1.win, 'lose': self.player1.lose}, {'displayName': self.player2.displayName, 'win': self.player2.win, 'lose': self.player2.lose});
+    //first, see if we can find this user in the db. If not, tell them to stop haxxoring.
+    User.findOne({displayName: msg.data}, function(err,user) {
+      if(err) { throw err; }
+      if(user) {
+        /////
+        //Game Initialization
+        /////
+        //If there isn't a game already, create one, then tell the client to
+        //wait
+        //Or, if player1 hits refresh, just put them back to the Game.player1 property
+        if (!Game.player1 || Game.player1.displayName===user.displayName) {
+          //If the user is simply re-freshing or re-joining their game, don't decrement
+          //their number of ranked plays left. Do if this is a fresh game
+          
+          //TODO: Make it so when the user refreshes, it marks them down for roundplay=true
+          
+          if (!Game.player1 && user.roundplays>0) {
+            Game.player1 = socket;
+            Game.player1.roundplay = true;
+            user.roundplays--;
+            user.save(function(err) {
+              if(err) {throw err;}
+              console.log('Round plays decremented for user');
+            });
+            socket.displayName = msg.data
+            socket.game = Game
+            socket.choice = socket.game.player1choice = {} //This will be the player's choice
+          } else {
+            Game.player1 = socket;
+            Game.player1.roundplay = true;
+            socket.displayName = msg.data
+            socket.game = Game
+            socket.choice = socket.game.player1choice = {} //This will be the player's choice
           }
-          Game = {}
-            
-          //Ok, Finally, we do the game. This is the actual game execution
-          socket.game.timer(5, socket.game.timer, function() {
-            //Initial 5 seconds is over. Time for the players to make a choice
-            socket.game.emittoboth('gamestatus', { data: 'Choose your play!'});
-            socket.game.emittoboth('choose');
-            socket.game.timer(3, socket.game.timer, function() {
-              socket.game.determinewinner(function(player1, player2) {
-                //Save the two players here
-                User.findOne({displayName: player1.displayName}, function (err, user) {
-                  if (err) { throw err; }
-                  if (user) {
-                    console.log(user)
-                    //Update player1's stats here
-                    user.wins += player1.win;
-                    user.losses += player1.lose;
-                    user.save(function (err) {
-                      if (err) { throw err; }
-                      console.log('saved');
-                    });
-                  }
-                  User.findOne({displayName: player2.displayName}, function (err, user) {
-                    if (err) { throw err; }
-                    if (user) {
-                      //Update player2's stats here
-                      user.wins += player2.win;
-                      user.losses += player2.lose;
-                      user.save(function (err) {
-                        if (err) { throw err; }
-                        console.log('saved')
-                      });
+          
+          socket.emit('wait',{data: 'Waiting for opponent'});
+          console.log(socket.displayName + ' is player 1');
+        } else { //If there is a game, have this player join the game, and then
+        //free up the Game variable for the next client pair
+          //First, decrement this person's round plays if not already at 0
+          if (user && user.roundplays>0) {
+            Game.player2 = socket
+            Game.player2.roundplay = true;
+            user.roundplays--;
+            user.save(function(err) {
+              if(err) {throw err;}
+              console.log('Round plays decremented for user');
+            });
+            socket.displayName = msg.data
+            socket.game = Game
+            socket.choice = socket.game.player2choice = {} //This will be the player's choice
+          } else {
+            Game.player2 = socket
+            socket.displayName = msg.data
+            socket.game = Game
+            socket.choice = socket.game.player2choice = {} //This will be the player's choice
+          }
+          
+          console.log(socket.displayName + ' is player 2');
+          socket.emit('join',{data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}});
+          socket.emit('gamestatus', {data: 'Game is about to begin!'});
+          socket.game.player1.emit('join', {data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}})
+          socket.game.player1.emit('gamestatus', {data: 'Game is about to begin!'})
+          
+          //Does the timer stuff for the game
+          socket.game.timer = function(seconds, callback, next) {
+            var self = this;
+            self.player1.emit('timer', {data: seconds})
+            self.player2.emit('timer', {data: seconds})
+            if (seconds === 0) {
+              next.call(self);
+            } else {
+                setTimeout(function() {
+                  callback.call(self, --seconds, callback, next);
+                }, 1000);
+            }
+          }
+          
+          //Emits to both players
+          socket.game.emittoboth = function(msg, data) {
+            self = this
+            self.player1.emit(msg, data);
+            self.player2.emit(msg, data);
+          }
+          
+          //Determines the winner of the game
+          socket.game.determinewinner = function(callback) {
+                switch (self.player1choice.choice) {
+                  case 'rock':
+                    switch (self.player2choice.choice) {
+                      case 'rock':
+                        //Tie. Reshoot
+                        self.emittoboth('gamestatus', { data: 'Tie! Reshoot in 5 seconds!'});
+                        self.player2.win = 0
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 0
+                        break;
+                      case 'paper':
+                        //Player1 loses
+                        self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
+                        //Probably a nicer way to do this
+                        self.player2.win = 1
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 1
+                        break;
+                      case 'scissors':
+                        //Player1 wins
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
+                      default:
+                        //Opponent didn't make a choice
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
                     }
+                    break;
+                  
+                  case 'paper':
+                    switch (self.player2choice.choice) {
+                      case 'rock':
+                        //Player1 wins
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
+                      
+                      case 'paper':
+                        //Tie. Reshoot
+                        self.emittoboth('gamestatus', { data: 'Tie! You are awarded no points!'});
+                        self.player2.win = 0
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 0
+                        break;
+                      
+                      case 'scissors':
+                        //Player1 loses
+                        self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
+                        self.player2.win = 1
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 1
+                        break;
+                      
+                      default:
+                        //Opponent didn't make a choice
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
+                    }
+                    break;
+                  
+                  case 'scissors':
+                    switch (self.player2choice.choice) {
+                      case 'rock':
+                        //Player1 loses
+                        self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins!'});
+                        self.player2.win = 1
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 1
+                        break;
+                      
+                      case 'paper':
+                        //Player1 wins
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
+                      
+                      case 'scissors':
+                        //Tie. Reshoot
+                        self.emittoboth('gamestatus', { data: 'Tie! Reshoot in 5 seconds!'});
+                        self.player2.win = 0
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 0
+                        break;
+                      
+                      default:
+                        //Opponent didn't make a choice
+                        self.emittoboth('gamestatus', { data: self.player1.displayName + ' wins by default! ' + self.player2.displayName + ' didn\'t choose!'});
+                        self.player1.win = 1
+                        self.player1.lose = 0
+                        self.player2.win = 0
+                        self.player2.lose = 1
+                        break;
+                    }
+                    break;
+                  default:
+                    //This client didn't make a choice
+                    switch (self.player2choice.choice) {
+                      case undefined:
+                        //Neither player made a choice
+                         self.emittoboth('gamestatus', { data: 'No one wins! Neither chose!'});
+                         self.player2.win = 0
+                         self.player2.lose = 1
+                         self.player1.win = 0
+                         self.player1.lose = 1
+                         break;
+                      default:
+                        //Player1 didn't make a choice
+                        self.emittoboth('gamestatus', { data: self.player2.displayName + ' wins by default! ' + self.player1.displayName + ' didn\'t choose!'});
+                        self.player2.win = 1
+                        self.player2.lose = 0
+                        self.player1.win = 0
+                        self.player1.lose = 1
+                        break;
+                    }
+                    break;
+                }
+                 self.emittoboth('results', { data: {player1choice: socket.game.player1choice.choice, player2choice: socket.game.player2choice.choice}});
+                 callback({'displayName': self.player1.displayName, 'win': self.player1.win, 'lose': self.player1.lose}, {'displayName': self.player2.displayName, 'win': self.player2.win, 'lose': self.player2.lose});
+              }
+              Game = {}
+                
+              //Ok, Finally, we do the game. This is the actual game execution
+              socket.game.timer(5, socket.game.timer, function() {
+                //Initial 5 seconds is over. Time for the players to make a choice
+                socket.game.emittoboth('gamestatus', { data: 'Choose your play!'});
+                socket.game.emittoboth('choose');
+                socket.game.timer(3, socket.game.timer, function() {
+                  socket.game.determinewinner(function(player1, player2) {
+                    //Save the two players here
+                    User.findOne({displayName: player1.displayName}, function (err, user) {
+                      if (err) { throw err; }
+                      if (user) {
+                        console.log(user)
+                        //Update player1's stats here
+                        user.wins += player1.win;
+                        user.losses += player1.lose;
+                        //If this is ranked, increase the users's roundwins/roundlosses
+                        if (socket.game.player1.roundplay) {
+                          user.roundwins+= player1.win;
+                          user.roundlosses+= player1.lose;
+                          user.save(function (err) {
+                            if (err) { throw err; }
+                            console.log('saved');
+                          });
+                        } else {
+                          user.save(function (err) {
+                            if (err) { throw err; }
+                            console.log('saved');
+                          });
+                        }
+                      }
+                      User.findOne({displayName: player2.displayName}, function (err, user) {
+                        if (err) { throw err; }
+                        if (user) {
+                          //Update player2's stats here
+                          user.wins += player2.win;
+                          user.losses += player2.lose;
+                          //If this is ranked, increase the users's roundwins/roundlosses
+                          if (socket.game.player2.roundplay) {
+                            user.roundwins+= player2.win;
+                            user.roundlosses+= player2.lose;
+                            user.save(function (err) {
+                              if (err) { throw err; }
+                              console.log('saved');
+                            });
+                          } else {
+                            user.save(function (err) {
+                              if (err) { throw err; }
+                              console.log('saved');
+                            });
+                          }
+                        }
+                      });
+                    });
                   });
                 });
               });
-            });
-          });
-        }
+            }
+          } else {
+            socket.emit('gamestatus', {data: 'Sorry, couldn\'t find you in our DB'});
+          }
+        });
       });
       socket.on('choice', function(msg){
         console.log(socket.displayName + " chose " + msg.data)

@@ -26,6 +26,56 @@ a {
 #footer {
   font-size: .7em;
 }
+/*Stats Page*/
+table#stats {
+  border-collapse: collapse;
+}
+table#stats, table#stats th, table#stats td {
+  border: 1px solid black;
+}
+
+/* Stats Page */
+
+/* Wrapper */
+
+#userwrapper {
+  width: 640px;
+}
+
+/* Avatar */
+
+#userwrapper #avatararea {
+  width: 116px;
+  float: left;
+}
+
+#userwrapper #avatararea img {
+  width: 96px;
+}
+
+/* Stats Table */
+
+#userwrapper #individualstatsarea {
+  width: 524px;
+  float: right;
+}
+
+#userwrapper #individualstatsarea table#stats {
+  width: 504px;
+}
+
+#userwrapper #overallstatsarea {
+  width: 300px;
+  float: left;
+}
+
+#userwrapper #overallstatsarea #titleofchart {
+  text-align: center;
+  margin: 0px;
+  padding: 0px;
+}
+
+/* End Stats Page */
 
 /* Play Page */
 
