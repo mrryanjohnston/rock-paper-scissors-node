@@ -26,7 +26,7 @@ a {
 #footer {
   font-size: .7em;
 }
-/*Stats Page*/
+/* Start Stats Page */
 table#stats {
   border-collapse: collapse;
 }
@@ -34,12 +34,10 @@ table#stats, table#stats th, table#stats td {
   border: 1px solid black;
 }
 
-/* Stats Page */
-
 /* Wrapper */
 
 #userwrapper {
-  width: 640px;
+  width: 716px;
 }
 
 /* Avatar */
@@ -73,6 +71,26 @@ table#stats, table#stats th, table#stats td {
   text-align: center;
   margin: 0px;
   padding: 0px;
+}
+
+#userwrapper #roundstatsarea {
+  width: 300px;
+  float: left;
+}
+
+#userwrapper #roundstatsarea #titleofchart {
+  text-align: center;
+  margin: 0px;
+  padding: 0px;
+}
+
+#userwrapper #trophyarea {
+  clear: both;
+  padding: 20px 0 0 116px;
+}
+
+#userwrapper #trophyarea {
+  text-align: center;
 }
 
 /* End Stats Page */

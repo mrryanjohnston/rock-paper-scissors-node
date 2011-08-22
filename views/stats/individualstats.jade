@@ -8,14 +8,8 @@ p These are the stats, currently.
   #overallstatsarea
     h3#titleofchart Total Wins/Losses
     img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.wins+','+founduser.losses+'&chdl=Wins: '+founduser.wins+'|Losses: '+founduser.losses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.wins+' Wins, '+founduser.losses+' Losses')
-  #individualstatsarea
-    table#stats
-      tr
-        th Round Wins
-        th Round Losses
-        th Round Plays Left
-      tr
-        td #{founduser.roundwins}
-        td #{founduser.roundlosses}
-        td #{founduser.roundplays}
-    
+  #roundstatsarea
+    h3#titleofchart This Round    
+    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.roundwins+','+founduser.roundlosses+'&chdl=Wins: '+founduser.roundwins+'|Losses: '+founduser.roundlosses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.roundwins+' Wins, '+founduser.roundlosses+' Losses')
+  #trophyarea
+    h3#titleofchart Trophy Case
