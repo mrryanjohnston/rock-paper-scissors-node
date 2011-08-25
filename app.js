@@ -9,8 +9,7 @@ var express      = require('express'),
     mongooseAuth = require('mongoose-auth'),
     cron         = require('cron'),
     conf         = require('./conf'),
-    Promise      = everyauth.Promise,
-    User;
+    Promise      = everyauth.Promise;
     
 everyauth.debug = true;
 
@@ -21,7 +20,21 @@ var Schema = mongoose.Schema
 , ObjectId = mongoose.SchemaTypes.ObjectId;
 
 /*Database stuff*/
-var User = new Schema({
+var Trophies = new Schema({
+    title          : {type: String, default: null}
+    , filename     : {type: String, default: null}
+    , description  : {type: String, default: null}
+});
+
+//Need a better name than this:
+var LongTermSystemData = new Schema({
+    lastWinner     : {type: String, default: null}
+    , currentFirstTrophy  : [Trophies]
+    , currentSecondTrophy : [Trophies]
+    , currentThirdTrophy  : [Trophies]
+});
+
+var User     = new Schema({
     displayName    : {type: String, default: null}
     , avatar       : {type: String, default: 'avatardefault.png'}
     , wins         : {type: Number, default: 0}
@@ -29,9 +42,7 @@ var User = new Schema({
     , rocks        : {type: Number, default: 0}
     , papers       : {type: Number, default: 0}
     , scissors     : {type: Number, default: 0}
-    , roundfirsts  : {type: Number, default: 0}
-    , roundseconds : {type: Number, default: 0}
-    , roundthirds  : {type: Number, default: 0}
+    , trophycase   : [Trophies]
     , roundwins    : {type: Number, default: 0}
     , roundlosses  : {type: Number, default: 0}
     , roundplays   : {type: Number, default: 10} //This is DAILY, rather than round-wide
@@ -79,8 +90,47 @@ User.plugin(mongooseAuth, {
 });
 
 mongoose.model('User', User);
+mongoose.model('Trophies', Trophies);
+mongoose.model('LongTermSystemData', LongTermSystemData);
 mongoose.connect('mongodb://localhost/db');
 User = mongoose.model('User');
+Trophies = mongoose.model('Trophies');
+LongTermSystemData = mongoose.model('LongTermSystemData');
+
+/*This stuff is hardcoded for now. In the future, there'll be an admin panel to put it
+ * new trophies
+ */
+myTrophies = [
+               { title: '1st place Alpha', filename: 'alpha-1st.png', description: 'Congrats! You got First during the Alpha Testing version of RPS Node!' }, 
+               { title: '2nd place Alpha', filename: 'alpha-2nd.png', description: 'Congrats! You got Second during the Alpha Testing version of RPS Node!' },
+               { title: '3rd place Alpha', filename: 'alpha-3rd.png', description: 'Congrats! You got Third during the Alpha Testing version of RPS Node!' },
+             ];
+myTrophies.forEach(function(trophy) {
+  Trophies.findOne({filename: trophy.filename}, function(err, foundTrophy) {
+    if (!foundTrophy) {
+      var newTrophy = new Trophies();
+      newTrophy.title = trophy.title;
+      newTrophy.filename = trophy.filename;
+      newTrophy.description = trophy.description;
+      newTrophy.save(function(err) {
+        if (!err) console.log('Saved a Trophy');
+      });
+    }
+  });
+});
+LongTermSystemData.findOne({}, function(err, result) {
+  if (!result) {
+    var newData = new LongTermSystemData();
+    newData.lastWinner = 'Nobody';
+    newData.currentFirstTrophy = myTrophies[0];
+    newData.currentSecondTrophy = myTrophies[1];
+    newData.currentThirdTrophy = myTrophies[2];
+    newData.save(function(err) {
+        if (!err) console.log('Saved Data');
+    });
+  }
+});
+
 /*End Database Stuff*/
     
 /*Cron Stuff*/
@@ -101,32 +151,37 @@ new cron.CronJob('0 0 0 * * 1-6', function() {
 
 //Saturday
 new cron.CronJob('0 0 0 * * 7', function() {
-  User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
-    var place = -1;
-    var places = ['roundfirsts', 'roundseconds', 'roundthirds'];
-    foundusers.forEach(function(user) {
-      user[places[++place]]++;
-      user.save(function(err) {
-        //if this is the last time we have to award a player, then FLUSH THE ROUND
-        if (place===foundusers.length-1) {
-          User.find({}, function (err, users) {
-            //Each user
-            users.forEach(function(user) {
-              user.roundplays  = 0;
-              user.roundwins   = 0;
-              user.roundlosses = 0;
-              user.save(function(err) {
-                if (err) { throw err; }
+  LongTermSystemData.findOne({}, function(err, result) {
+    User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
+      var place = -1;
+      var places = ['currentFirstTrophy', 'currentSecondTrophy', 'currentThirdTrophy'];
+      foundusers.forEach(function(user) {
+        //This is kind-of complicated and horrible. Pushes a new trophy into the user's
+        //trophycase. This works by taking result's (which is the result currently held in
+        //LongTermSystemData) property according to whatever the firstplace trophy is
+        user.trophycase.push(result[places[++place]][0]);
+        user.save(function(err) {
+          //if this is the last time we have to award a player, then FLUSH THE ROUND
+          if (place===foundusers.length-1) {
+            User.find({}, function (err, users) {
+              //Each user
+              users.forEach(function(user) {
+                user.roundplays  = 0;
+                user.roundwins   = 0;
+                user.roundlosses = 0;
+                user.save(function(err) {
+                  if (err) { throw err; }
+                });
               });
             });
-          });
-        }
-      });
-      //Award each of these guys one 1st, one 2nd, one 3rd respectively
-      //Compare everyone's round score, declare 1st, 2nd, 3rd places,
-      //add these counts to player's db entries
-      
+          }
+        });
+        //Award each of these guys one 1st, one 2nd, one 3rd respectively
+        //Compare everyone's round score, declare 1st, 2nd, 3rd places,
+        //add these counts to player's db entries
+        
 
+      });
     });
   });
 });
@@ -134,42 +189,41 @@ new cron.CronJob('0 0 0 * * 7', function() {
 
 //Test
 /*new cron.CronJob('*6 * * * * *', function() {
-  User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
-    var place = -1;
-    var places = ['roundfirsts', 'roundseconds', 'roundthirds'];
-    foundusers.forEach(function(user) {
-      //Alright, so, sorry about this one, but:
-      //Increase the document's property equal to user.'whatever place', where
-      //'whatever place' is determined from the value of place increased by 1
-      //as an index of the places array
-      console.log(place);
-      console.log(user);
-      user[places[++place]]++;
-      console.log(place);
-      user.save(function(err) {
-        //if this is the last time we have to award a player, then FLUSH THE ROUND
-        if (place===foundusers.length-1) {
-          User.find({}, function (err, users) {
-            //Each user
-            users.forEach(function(user) {
-              user.roundplays  = 0;
-              user.roundwins   = 0;
-              user.roundlosses = 0;
-              user.save(function(err) {
-                if (err) { throw err; }
+  LongTermSystemData.findOne({}, function(err, result) {
+    User.find({}).sort('roundwins', -1).limit(3).execFind(function(err, foundusers) {
+      var place = -1;
+      var places = ['currentFirstTrophy', 'currentSecondTrophy', 'currentThirdTrophy'];
+      foundusers.forEach(function(user) {
+        //This is kind-of complicated and horrible. Pushes a new trophy into the user's
+        //trophycase. This works by taking result's (which is the result currently held in
+        //LongTermSystemData) property according to whatever the firstplace trophy is
+        user.trophycase.push(result[places[++place]][0]);
+        user.save(function(err) {
+          //if this is the last time we have to award a player, then FLUSH THE ROUND
+          if (place===foundusers.length-1) {
+            User.find({}, function (err, users) {
+              //Each user
+              users.forEach(function(user) {
+                user.roundplays  = 0;
+                user.roundwins   = 0;
+                user.roundlosses = 0;
+                user.save(function(err) {
+                  if (err) { throw err; }
+                });
               });
             });
-          });
-        }
-      });
-      //Award each of these guys one 1st, one 2nd, one 3rd respectively
-      //Compare everyone's round score, declare 1st, 2nd, 3rd places,
-      //add these counts to player's db entries
-      
+          }
+        });
+        //Award each of these guys one 1st, one 2nd, one 3rd respectively
+        //Compare everyone's round score, declare 1st, 2nd, 3rd places,
+        //add these counts to player's db entries
+        
 
+      });
     });
   });
-});*/
+});
+*/
 
 
 /*End Cron Stuff*/
@@ -264,8 +318,13 @@ function userCannotHaveDisplayName(req, res, next) {
 // Routes
 
 app.get('/', userMustHaveDisplayName, function(req, res){
-  res.render('index', {
-    title: 'Rock, Paper, Scissors, Node!'
+  LongTermSystemData.findOne({}, function(err, result) {
+    if(err) { throw err; }
+    console.log(result);
+    res.render('index', {
+      title: 'Rock, Paper, Scissors, Node!'
+      , result: result
+    });
   });
 });
 
@@ -394,6 +453,8 @@ io.sockets.on('connection', function(socket){
             user.save(function(err) {
               if(err) {throw err;}
               console.log('Round plays decremented for user');
+              //Send emit notice back to user
+              socket.emit('roundplaycount',{data: user.roundplays });
             });
             socket.displayName = msg.data
             socket.game = Game
@@ -418,6 +479,8 @@ io.sockets.on('connection', function(socket){
             user.save(function(err) {
               if(err) {throw err;}
               console.log('Round plays decremented for user');
+              //Send emit notice back to user
+              socket.emit('roundplaycount',{data: user.roundplays });
             });
             socket.displayName = msg.data
             socket.game = Game

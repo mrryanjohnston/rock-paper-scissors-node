@@ -53,15 +53,6 @@ table#stats, table#stats th, table#stats td {
 
 /* Stats Table */
 
-#userwrapper #individualstatsarea {
-  width: 524px;
-  float: right;
-}
-
-#userwrapper #individualstatsarea table#stats {
-  width: 504px;
-}
-
 #userwrapper #overallstatsarea {
   width: 300px;
   float: left;
@@ -93,6 +84,13 @@ table#stats, table#stats th, table#stats td {
   text-align: center;
 }
 
+#userwrapper #trophyarea .trophy {
+ width: 200px;
+ float: left;
+}
+#userwrapper #trophyarea .trophy img {
+ width: 200px;
+}
 /* End Stats Page */
 
 /* Play Page */

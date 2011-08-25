@@ -13,3 +13,8 @@ p These are the stats, currently.
     img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.roundwins+','+founduser.roundlosses+'&chdl=Wins: '+founduser.roundwins+'|Losses: '+founduser.roundlosses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.roundwins+' Wins, '+founduser.roundlosses+' Losses')
   #trophyarea
     h3#titleofchart Trophy Case
+    - if (founduser.trophycase.length)
+      p You won some trophies!
+      !=partial('trophies', founduser.trophycase);
+    - else
+      p You have't won any trophies yet :(

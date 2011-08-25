@@ -1,4 +1,9 @@
 h1= title
+- if (typeof result!=='undefined')
+  p The winner of last round was #{result.lastWinner}. Congrats!
+  p This round, you're all competing for #{result.currentFirstTrophy[0].title}, #{result.currentSecondTrophy[0].title}, and #{result.currentThirdTrophy[0].title} trophies! Good luck!
+- else
+  p No results :(
 ul
   - if (!everyauth.loggedIn)
     li

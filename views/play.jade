@@ -43,6 +43,9 @@ script
       socket.on('choose', function(msg) {
         $('#gamecontrols').show();
       });
+      socket.on('roundplaycount', function(msg) {
+        $('span#numberofplays').html(msg.data)
+      });
       
 
       //Button Clicks
@@ -92,8 +95,8 @@ h1= title
     #playagainarea
       input(type='button', name='playagain', id='playagain', value='Play Again?')
 #numberofplaysarea
-  p Ranked plays left:
-  span#numberofplays
+  p Ranked plays left: 
+    span#numberofplays
 #soundcheckbox
   input(type='checkbox', name='alert', id='alert')
   span Turn alert sound on (may require browser plugins!)
