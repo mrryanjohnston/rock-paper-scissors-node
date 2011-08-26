@@ -1,12 +1,11 @@
-h1= title
-p Note: In the future, you'll be able to login with Facebook, Twitter, etc! Woo!
-p Please enter your credentials below to register:
-form(name='register', id='register', method='post')
-  p Username:
-    input(type='text', id='username', name='username', maxlength='20')
-  p Password:
-    input(type='password', id='password', name='password')
-  p Password (again):
-    input(type='password', id='passwordagain', name='passwordagain')
-  p
-    input(type='submit', id='register', name='register', value='Register!')
+h1 Register
+p I won't spam your email, blah blah blah.
+form(action='/register', method='POST')
+  #email
+    label(for=everyauth.password.loginFormFieldName) Email
+    input(type='text', name=everyauth.password.loginFormFieldName, value=userParams[everyauth.password.loginFormFieldName])
+  #password
+    label(for=everyauth.password.passwordFormFieldName) Password
+    input(type='password', name=everyauth.password.passwordFormFieldName)
+  #submit
+    input(type='submit') Register

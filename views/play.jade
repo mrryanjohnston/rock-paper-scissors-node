@@ -1,51 +1,105 @@
 script(src='/socket.io/socket.io.js')
 script(src='http://code.jquery.com/jquery-latest.js')
 script
-  var socket = new io.Socket(); 
-  socket.connect();
+  var socket = io.connect();
     $(function() {
       //When the player joins, the script will first see if a game is available
       //If now game is available, create a new game
-      socket.send({'type': 'search', 'data': '#{session.username}'})
+      socket.emit('initial', {'data': '#{user.displayName}'})
       
       //When we get a message from the server, we will interpret it and provide
       //the relevant information to the player
-      socket.on('message', function(msg) {
-        switch (msg.type) {
-          //The player is asked to wait
-          case 'wait':
-            $('#player1name').html('#{session.username}')
-            $('#gamestatus').html(msg.data)
-            break;
-          //When a player joins, a 'join' message is sent to both players
-          //so that they can update their user interface with their opponent's
-          //and the player's names. Then tells the server they're ready
-          case 'join':
-            $('#player1name').html(msg.data.player1name)
-            $('#player2name').html(msg.data.player2name)
-            socket.send({'type': 'ready', 'data': ''});
-            break;
-          //If a timer is sent, we will display this message in the #timersection
-          case 'timer':
-            $('#timersection').html(msg.data)
-            break;
-          //Game status informs the player what's going on in the game
-          case 'gamestatus':
-            $('#gamestatus').html(msg.data)
-            break;
+      socket.on('wait', function(msg) {
+        $('#player1name').html('#{user.displayName}')
+        $('#gamestatus').html(msg.data)
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
+        $('#player2choice').html('')
+        $('#player2name').html('')
+      });
+      socket.on('join', function(msg) {
+        $('#player1name').html(msg.data.player1name)
+        $('#player2name').html(msg.data.player2name)
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
+        $('#player2choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
+      });
+      socket.on('timer', function(msg) {
+        $('#timersection').html(msg.data);
+        if (($('input#alert').is(':checked'))) { //If the checkbox is enabled, play the alert sound with each tick
+          $('#soundarea').html('<audio autoplay="autoplay"><source src="/sounds/boop.mp3" type="audio/mpeg"/><source src="/sounds/boop.wav" type="audio/wav"/>Your browser does not support the audio element. Use a real browser.</audio>');
         }
+      });
+      socket.on('gamestatus', function(msg) {
+        $('#gamestatus').html(msg.data)
+      });
+      socket.on('initialchoice', function(msg) { //This is when the player makes initial choice.
+        $(msg.data.playerchoicediv).html('<img src="/images/'+msg.data.playerchoice+'.png" alt="'+msg.data.playerchoice+'"/>');
+      });
+      socket.on('results', function(msg) {
+        $('#gamecontrols').hide();
+        $('#playagainarea').show();
+        $('#player1choice').html('<img src="/images/'+msg.data.player1choice+'.png" alt="'+msg.data.player1choice+'"/>')
+        $('#player2choice').html('<img src="/images/'+msg.data.player2choice+'.png" alt="'+msg.data.player2choice+'"/>')
+      });
+      socket.on('choose', function(msg) {
+        $('#gamecontrols').show();
+      });
+      socket.on('roundplaycount', function(msg) {
+        $('span#numberofplays').html(msg.data)
+      });
+      
+
+      //Button Clicks
+      $('#rock').click(function() {
+        socket.emit('choice',{ 'data': 'rock'});
+      });
+      $('#paper').click(function() {
+        socket.emit('choice',{ 'data': 'paper'});
+      });
+      $('#scissors').click(function() {
+        socket.emit('choice',{ 'data': 'scissors'});
+      });
+      $('#playagain').click(function() {
+        socket.emit('initial',{ 'data': '#{user.displayName}'});
+        $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')
+        $('#player2choice').html('')
+        $('#playagainarea').hide();
       });
     });
 h1= title
-h2
-  #timersection
-h3
-  #gamestatus
-p Player 1: 
-  span#player1name
-p Player 1 Choice:
-  span#player1choice
-p Player 2: 
-  span#player2name
-p Player 2 Choice:
-  span#player2choice
+#gameareawrapper
+  #playerareawrapper
+    #player1
+      #player1namearea
+        h3
+          span#player1name
+      #player1picturearea
+        #player1choice
+    #player2
+      #player2namearea
+        h3
+          span#player2name
+      #player2picturearea
+        #player2choice
+  #gamemetrics
+    p
+      span#timersection
+    p
+      span#gamestatus
+    #gamecontrols
+      #rock
+        img(src='images/rocksmall.png')
+      #paper
+        img(src='images/papersmall.png')
+      #scissors
+        img(src='images/scissorssmall.png')
+    #playagainarea
+      input(type='button', name='playagain', id='playagain', value='Play Again?')
+#numberofplaysarea
+  p Ranked plays left: 
+    span#numberofplays
+#soundcheckbox
+  input(type='checkbox', name='alert', id='alert')
+  span Turn alert sound on (may require browser plugins!)
+#soundarea
+#footer
+  p Alert "boop" sound found here: http://www.freesound.org/samplesViewSingle.php?id=25885  

@@ -1,15 +1,29 @@
 h1= title
-p Welcome to #{title}
-  - if (session.username)
-    , #{session.username}.
-ul
-- if (!session.username)
-  li
-    a(href="/login") Login
-  li
-    a(href="/register") Register
+- if (typeof result!=='undefined')
+  p The winner of last round was #{result.lastWinner}. Congrats!
+  p This round, you're all competing for #{result.currentFirstTrophy[0].title}, #{result.currentSecondTrophy[0].title}, and #{result.currentThirdTrophy[0].title} trophies! Good luck!
 - else
+  p No results :(
+ul
+  - if (!everyauth.loggedIn)
+    li
+      a(href="/login") Login
+    li
+      a(href="/register") Register
+    li
+      \-Or-
+    li
+      a(href="/auth/twitter") Login with Twitter!
+    li
+      a(href="/auth/github") Login with GitHub!
+  - else
+    p Sup, #{user.displayName}.
+    li
+      a(href="/play") Play!
+    li
+      a(href="/logout") Logout
   li
-    a(href="/play") Play!
+    \-
   li
-    a(href="/logout") Logout
+    a(href="/stats") Stats
+

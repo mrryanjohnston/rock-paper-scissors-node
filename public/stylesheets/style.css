@@ -6,3 +6,227 @@ body {
 a {
   color: #00B7FF;
 }
+
+#warn, #info {
+  border: 1px solid;
+  padding: 10px;
+  width: 400px;
+}
+
+#warn {
+  color: red;
+  border-color: red;
+}
+
+#info {
+  color: green;
+  border-color: green;
+}
+
+#footer {
+  font-size: .7em;
+}
+/* Start Stats Page */
+
+/* Everyone's stats wrapper */
+
+#statswrapper {
+  width: 700px;
+}
+
+#statswrapper #overallstatsarea {
+  width: 340px;
+  float: left;
+}
+
+#statswrapper #roundstatsarea {
+  width: 340px;
+  float: right;
+}
+
+/* Everyone's stats tables */
+
+#statswrapper table {
+  border-collapse: collapse;
+}
+#statswrapper table th {
+  background: #ddd;
+}
+#statswrapper table, table th, table td {
+  border: 1px solid black;
+  padding: 5px;
+}
+
+/* Wrapper */
+
+#userwrapper {
+  width: 716px;
+}
+
+/* Avatar */
+
+#userwrapper #avatararea {
+  width: 116px;
+  float: left;
+}
+
+#userwrapper #avatararea img {
+  width: 96px;
+}
+
+/* Stats Table */
+
+#userwrapper #overallstatsarea {
+  width: 300px;
+  float: left;
+}
+
+#userwrapper #overallstatsarea #titleofchart {
+  text-align: center;
+  margin: 0px;
+  padding: 0px;
+}
+
+#userwrapper #roundstatsarea {
+  width: 300px;
+  float: left;
+}
+
+#userwrapper #roundstatsarea #titleofchart {
+  text-align: center;
+  margin: 0px;
+  padding: 0px;
+}
+
+#userwrapper #trophyarea {
+  clear: both;
+  padding: 20px 0 0 116px;
+}
+
+#userwrapper #trophyarea {
+  text-align: center;
+}
+
+#userwrapper #trophyarea .trophy {
+ width: 200px;
+ float: left;
+}
+#userwrapper #trophyarea .trophy img {
+ width: 200px;
+}
+/* End Stats Page */
+
+/* Play Page */
+
+/* Wrapper */
+#gameareawrapper {
+  height: 320px;
+  width: 865px;
+  margin: 0px auto;
+  padding: 0px;
+}
+
+/* Player Area 
+   Fills the entire wrapper.
+   There are 2 divs: one for each player
+   Player1's div floats left, Player2's div floats right.
+   */
+#playerarea {
+  width: 865px;
+  margin: 0px auto;
+}
+#player1 {
+  width: 320px;
+  float: left;
+  text-align: center;
+}
+#player1namearea {
+  height: 20px;
+}
+#player1namearea h3{
+  margin: 0;
+  padding: 0;
+}
+#player1picturearea {
+  background: url('/images/background.png') no-repeat center;
+  height: 300px;
+}
+#player2 {
+  width: 320px;
+  float: right;
+  text-align: center;
+}
+#player2namearea {
+  height: 20px;
+}
+#player2namearea h3{
+  margin: 0;
+  padding: 0;
+}
+#player2picturearea {
+  background: url('/images/background.png') no-repeat center;
+  height: 300px;
+}
+#player1choice img, #player2choice img {
+  width: 300px;
+}
+#player2choice {
+  text-align: right;
+}
+
+/* Game Metrics Area */
+/* This is a third layer on top of the other two.
+   Displays the timer as well as any game statuses */
+#gamemetrics {
+  height: 320px;
+  width: 225px;
+  margin: 0px auto;
+  float: left;
+  position: relative;
+}
+
+#gamecontrols {
+  width: 225px;
+  margin: 0px auto;
+  display: none;
+  position: absolute;
+  bottom: 0px;
+  //border: 1px solid black;
+  height: 75px;
+}
+
+#gamecontrols div {
+  width: 75px;
+  float: left;
+  opacity: .5;
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+  filter: alpha(opacity=50); 
+}
+
+#gamecontrols div:hover {
+  cursor: pointer; 
+  cursor: hand;
+  opacity: 1;
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+  filter: alpha(opacity=100);
+}
+
+#playagainarea {
+  width: 225px;
+  margin: 0px auto;
+  display: none;
+}
+
+#timersection {
+  width: 225px;
+  margin: 0px auto;
+  text-align: center;
+}
+
+#gamestatus {
+  width: 225px;
+  margin: 0px auto;
+  text-align: center;
+}
+
+

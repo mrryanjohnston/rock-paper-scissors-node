@@ -1,12 +1,24 @@
 {
-  "name": "application-name",
-  "version": "0.0.1",
-  "private": true,
+  "author": "Ryan Johnston <mrryanjohnston@gmail.com> (http://www.hardlyexpected.com)",
+  "name": "rock-paper-scissors",
+  "description": "Rock, Paper, Scissors online fun!",
+  "version": "0.0.2",
+  "homepage": "http://rockpaperscissors.nodester.com",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mrryanjohnston/rock-paper-scissors-node.git"
+  },
+  "engines": {
+    "node": "~v0.4.10"
+  },
   "dependencies": {
-    "express": "~2.3.11",
-    "jade": "~0.13.0",
-    "mongoose": "~1.7.4",
-    "socket.io": "~0.7.7",
-    "bcrypt": "~0.2.3"
-  }
+    "sanitizer": "0.0.14",
+    "jade": "~0.14.0",
+    "mongoose": "~1.8.1",
+    "mongoose-auth": "0.0.11",
+    "express": "~2.4.4",
+    "socket.io": "~0.7.9",
+    "everyauth": "~0.2.18"
+  },
+  "devDependencies": {}
 }

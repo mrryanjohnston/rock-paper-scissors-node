@@ -1,0 +1,21 @@
+h1= title
+- if (user)
+  a(href='../stats/'+user.displayName) Your stats
+#statswrapper
+  #overallstatsarea
+    h2 Overall Stats
+    table
+      tr
+        th Name
+        th Wins
+        th Losses
+      !=partial('overallfoundusers', overallfoundusers);
+  #roundstatsarea
+    h2 This round's Stats
+    table
+      tr
+        th Name
+        th Round Wins
+        th Round Losses
+      !=partial('roundfoundusers', roundfoundusers);
+    

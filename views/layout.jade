@@ -1,11 +1,19 @@
 !!!
 html
   head
-    title= title
+    title Rock, Paper, Scissors, Node!
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
-    - if (info)
-      = info
-    - if (warn)
-      = warn
+    - if (info.length)
+      #info
+        = info
+    - if (warn.length)
+      #warn
+        = warn
+    - if ('undefined' !== typeof errors && errors.length)
+      #warn
+        ul
+        - each error in errors
+          li= error
     != body
+      
