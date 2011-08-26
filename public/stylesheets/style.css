@@ -27,11 +27,34 @@ a {
   font-size: .7em;
 }
 /* Start Stats Page */
-table#stats {
+
+/* Everyone's stats wrapper */
+
+#statswrapper {
+  width: 700px;
+}
+
+#statswrapper #overallstatsarea {
+  width: 340px;
+  float: left;
+}
+
+#statswrapper #roundstatsarea {
+  width: 340px;
+  float: right;
+}
+
+/* Everyone's stats tables */
+
+#statswrapper table {
   border-collapse: collapse;
 }
-table#stats, table#stats th, table#stats td {
+#statswrapper table th {
+  background: #ddd;
+}
+#statswrapper table, table th, table td {
   border: 1px solid black;
+  padding: 5px;
 }
 
 /* Wrapper */

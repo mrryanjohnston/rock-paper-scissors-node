@@ -387,17 +387,20 @@ app.get('/play', userMustHaveDisplayName, userMustBeLoggedIn, function(req, res)
 });
 
 app.get('/stats', userMustHaveDisplayName, function(req, res){
-  User.find({}).sort('wins', -1).limit(25).execFind(function(err, foundusers) {
-    if (err) { throw err; }
-    if (foundusers) {
-      res.render('stats', {
-        title: 'Rock, Paper, Scissors, Node!: Stats',
-        foundusers: foundusers
-      });
-    } else {
-      req.flash('warn', 'No users found! Yet... ');
-      res.redirect('/');
-    }
+  User.find({}).sort('wins', -1).limit(25).execFind(function(err, overallfoundusers) {
+    User.find({}).sort('roundwins', -1).limit(25).execFind(function(err, roundfoundusers) {
+      if (err) { throw err; }
+      if (overallfoundusers && roundfoundusers) {
+        res.render('stats', {
+          title: 'Rock, Paper, Scissors, Node!: Stats',
+          overallfoundusers: overallfoundusers,
+          roundfoundusers: roundfoundusers
+        });
+      } else {
+        req.flash('warn', 'No users found! Yet... ');
+        res.redirect('/');
+      }
+    });
   });
 });
 

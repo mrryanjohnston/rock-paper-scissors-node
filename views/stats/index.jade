@@ -1,14 +1,21 @@
 h1= title
-p These are the stats, currently. 
-  - if (user)
-    a(href='../stats/'+user.displayName) Your stats 
-table#stats
-  tr
-    th Name
-    th Wins
-    th Losses
-    th Round Wins
-    th Round Losses
-    th Round Plays Left
-  !=partial('founduser', foundusers);
-  
+- if (user)
+  a(href='../stats/'+user.displayName) Your stats
+#statswrapper
+  #overallstatsarea
+    h2 Overall Stats
+    table
+      tr
+        th Name
+        th Wins
+        th Losses
+      !=partial('overallfoundusers', overallfoundusers);
+  #roundstatsarea
+    h2 This round's Stats
+    table
+      tr
+        th Name
+        th Round Wins
+        th Round Losses
+      !=partial('roundfoundusers', roundfoundusers);
+    
