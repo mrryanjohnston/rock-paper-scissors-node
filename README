@@ -1,6 +1,20 @@
-Rock-Paper-Scissors-Node is an over-the-internet implementation of rock-paper scissors.
-It is written in node.js v0.4.8, mongodb, express v2.3.11,
-socket.io v0.6.18, mongoose v1.4.0, and bcrypt v0.2.3 on the server side.
-On the client side, it is written in jQuery, HTML5, and CSS3.
+#Rock, Paper, Scissors, Node!
+RPSNode is an over-the-internet implementation of rock-paper scissors written in node.js.
+
+##Serverside:
+* sanitizer
+* jade
+* mongoose
+* mongoose-auth
+* express
+* socket.io
+* everyauth
+
+##Client Side:
+* jQuery
+* HTML5
+* CSS
+
+If I left anything out, feel free to speak up.
 
 Copyright Ryan Johnston 2011
