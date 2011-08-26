@@ -9,6 +9,7 @@ RPSNode is an over-the-internet implementation of rock-paper scissors written in
 * express
 * socket.io
 * everyauth
+* cron
 
 ##Client Side:
 * jQuery
