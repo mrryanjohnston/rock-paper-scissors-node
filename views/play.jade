@@ -2,6 +2,7 @@ script(src='/socket.io/socket.io.js')
 script(src='http://code.jquery.com/jquery-latest.js')
 script
     var isPlayerOne = false;
+    var botTimer = false;
     var timer = function(seconds, callback) {
       seconds || 5
       callback(seconds);
@@ -15,6 +16,7 @@ script
           console.log(seconds);
         }
       }, 1000);
+      return timerInterval;
     }
     var socket = io.connect();
     $(function() {
@@ -33,11 +35,13 @@ script
         $('#player2name').html('')
         isPlayerOne = true;
         //Bot Timer
-        timer(10, function(seconds) {
+        botTimer = timer(10, function(seconds) {
           $('#timersection').html(seconds);
         });
       });
       socket.on('join', function(msg) {
+        //Unset botTimer
+        clearInterval(botTimer);
         if (!isPlayerOne) {
           $('#player1name').html(msg.data.player1name)
           $('#player1choice').html('<img src="/images/questionmark.png" alt="questionmark"/>')

@@ -178,13 +178,13 @@ new cron.CronJob('0 0 0 * * 7', function() {
         //trophycase. This works by taking result's (which is the result currently held in
         //LongTermSystemData) property according to whatever the firstplace trophy is
         user.trophycase.push(result[places[++place]][0]);
-        user.save(function(err) {
+        (function(thisplace) { user.save(function(err) {
           //if this is the last time we have to award a player, then FLUSH THE ROUND
-          if (place===foundusers.length-1) {
+          if (thisplace===foundusers.length-1) {
             User.find({}, function (err, users) {
               //Each user
               users.forEach(function(user) {
-                user.roundplays  = 0;
+                //user.roundplays  = 0;
                 user.roundwins   = 0;
                 user.roundlosses = 0;
                 user.save(function(err) {
@@ -192,16 +192,31 @@ new cron.CronJob('0 0 0 * * 7', function() {
                 });
               });
             });
+          } 
+          if (thisplace===0&&result) {
+            result.lastWinner = user.displayName;
+            result.save(function(err) {
+              if (err) { throw err; }
+            });
           }
         });
         //Award each of these guys one 1st, one 2nd, one 3rd respectively
         //Compare everyone's round score, declare 1st, 2nd, 3rd places,
         //add these counts to player's db entries
         
-
+      })(place);
       });
     });
-    //TODO: Save the winner to this record
+  });
+  //Reset the number of "round plays" to 10.
+  User.find({}, function (err, users) {
+    //Each user
+    users.forEach(function(user) {
+      user.roundplays = 10;
+      user.save(function(err) {
+        if (err) { throw err; }
+      });
+    });
   });
 });
 
@@ -217,13 +232,13 @@ new cron.CronJob('0 0 0 * * 7', function() {
         //trophycase. This works by taking result's (which is the result currently held in
         //LongTermSystemData) property according to whatever the firstplace trophy is
         user.trophycase.push(result[places[++place]][0]);
-        user.save(function(err) {
+        (function(thisplace) { user.save(function(err) {
           //if this is the last time we have to award a player, then FLUSH THE ROUND
-          if (place===foundusers.length-1) {
+          if (thisplace===foundusers.length-1) {
             User.find({}, function (err, users) {
               //Each user
               users.forEach(function(user) {
-                user.roundplays  = 0;
+                //user.roundplays  = 0;
                 user.roundwins   = 0;
                 user.roundlosses = 0;
                 user.save(function(err) {
@@ -231,18 +246,34 @@ new cron.CronJob('0 0 0 * * 7', function() {
                 });
               });
             });
+          } 
+          if (thisplace===0&&result) { //TODO: TEST this. Make sure it sets lastWinner to the right person
+            result.lastWinner = user.displayName;
+            result.save(function(err) {
+              if (err) { throw err; }
+            });
           }
         });
         //Award each of these guys one 1st, one 2nd, one 3rd respectively
         //Compare everyone's round score, declare 1st, 2nd, 3rd places,
         //add these counts to player's db entries
         
-
+      })(place);
       });
     });
   });
-});
-*/
+  //Reset the number of "round plays" to 10.
+  User.find({}, function (err, users) {
+    //Each user
+    users.forEach(function(user) {
+      user.roundplays = 10;
+      user.save(function(err) {
+        if (err) { throw err; }
+      });
+    });
+  });
+});*/
+
 
 
 /*End Cron Stuff*/
