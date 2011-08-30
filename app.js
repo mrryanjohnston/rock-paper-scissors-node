@@ -57,12 +57,15 @@ var User     = new Schema({
     , avatar       : {type: String, default: 'avatardefault.png'}
     , wins         : {type: Number, default: 0}
     , losses       : {type: Number, default: 0}
-    , rocks        : {type: Number, default: 0}
-    , papers       : {type: Number, default: 0}
+    , rock         : {type: Number, default: 0}
+    , paper        : {type: Number, default: 0}
     , scissors     : {type: Number, default: 0}
     , trophycase   : [Trophies]
     , roundwins    : {type: Number, default: 0}
     , roundlosses  : {type: Number, default: 0}
+    , roundrock    : {type: Number, default: 0}
+    , roundpaper   : {type: Number, default: 0}
+    , roundscissors : {type: Number, default: 0}
     , roundplays   : {type: Number, default: 10} //This is DAILY, rather than round-wide
 });
 
@@ -646,7 +649,7 @@ Game.prototype.determinewinner = function(callback) {
       break;
   }
    self.emittoboth('results', { data: {player1choice: self.player1choice.choice, player2choice: self.player2choice.choice}});
-   callback({'displayName': self.player1.displayName, 'win': self.player1.win, 'lose': self.player1.lose}, {'displayName': self.player2.displayName, 'win': self.player2.win, 'lose': self.player2.lose});
+   callback({'displayName': self.player1.displayName, 'win': self.player1.win, 'lose': self.player1.lose, 'choice': self.player1choice.choice}, {'displayName': self.player2.displayName, 'win': self.player2.win, 'lose': self.player2.lose, 'choice': self.player2choice.choice});
 }
 Game.prototype.playGame = function(socket, callback) {
   socket.game.emittoboth('join',{data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}});
@@ -674,6 +677,7 @@ Game.prototype.playGame = function(socket, callback) {
             //Update player1's stats here
             user.wins += player1.win;
             user.losses += player1.lose;
+            user[player1.choice]++;
             //If this is ranked, increase the users's roundwins/roundlosses
             if (socket.game.player1.roundplay) {
               user.roundwins+= player1.win;
@@ -695,6 +699,7 @@ Game.prototype.playGame = function(socket, callback) {
               //Update player2's stats here
               user.wins += player2.win;
               user.losses += player2.lose;
+              user[player2.choice]++;
               //If this is ranked, increase the users's roundwins/roundlosses
               if (socket.game.player2.roundplay) {
                 user.roundwins+= player2.win;
