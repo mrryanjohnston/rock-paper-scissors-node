@@ -8,9 +8,13 @@ p These are the stats, currently.
   #overallstatsarea
     h3#titleofchart Total Wins/Losses
     img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.wins+','+founduser.losses+'&chdl=Wins: '+founduser.wins+'|Losses: '+founduser.losses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.wins+' Wins, '+founduser.losses+' Losses')
+    h3#titleofchart Total Rock/Paper/Scissors
+    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=714400|FDFDAD|3EC33E&chd=s:CCD&chd=t:'+founduser.rock+','+founduser.paper+','+founduser.scissors+'&chdl=Rock: '+founduser.rock+'|Paper: '+founduser.paper+'|Scissors: '+founduser.scissors+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.rock+' Rock, '+founduser.paper+' Paper, '+founduser.scissors+' Scissors')
   #roundstatsarea
-    h3#titleofchart This Round    
-    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.roundwins+','+founduser.roundlosses+'&chdl=Wins: '+founduser.roundwins+'|Losses: '+founduser.roundlosses+'&chdlp=b', width='300', height='225', alt='Overall: '+founduser.roundwins+' Wins, '+founduser.roundlosses+' Losses')
+    h3#titleofchart Round Wins/Losses
+    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=71F592|F67A7A&chd=t:'+founduser.roundwins+','+founduser.roundlosses+'&chdl=Wins: '+founduser.roundwins+'|Losses: '+founduser.roundlosses+'&chdlp=b', width='300', height='225', alt='Round: '+founduser.roundwins+' Wins, '+founduser.roundlosses+' Losses')
+    h3#titleofchart Round Rock/Paper/Scissors
+    img(src='http://chart.apis.google.com/chart?chs=300x225&cht=p&chco=714400|FDFDAD|3EC33E&chd=s:CCD&chd=t:'+founduser.roundrock+','+founduser.roundpaper+','+founduser.roundscissors+'&chdl=Rock: '+founduser.roundrock+'|Paper: '+founduser.roundpaper+'|Scissors: '+founduser.roundscissors+'&chdlp=b', width='300', height='225', alt='Round: '+founduser.roundrock+' Rock, '+founduser.roundpaper+' Paper, '+founduser.roundscissors+' Scissors')
   #trophyarea
     h3#titleofchart Trophy Case
     - if (founduser.trophycase.length)

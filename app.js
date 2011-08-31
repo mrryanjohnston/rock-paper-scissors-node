@@ -187,9 +187,12 @@ new cron.CronJob('0 0 0 * * 7', function() {
             User.find({}, function (err, users) {
               //Each user
               users.forEach(function(user) {
-                //user.roundplays  = 0;
-                user.roundwins   = 0;
-                user.roundlosses = 0;
+                user.roundplays    = 0;
+                user.roundwins     = 0;
+                user.roundlosses   = 0;
+                user.roundrock     = 0;
+                user.roundpaper    = 0;
+                user.roundscissors = 0;
                 user.save(function(err) {
                   if (err) { throw err; }
                 });
@@ -682,6 +685,7 @@ Game.prototype.playGame = function(socket, callback) {
             if (socket.game.player1.roundplay) {
               user.roundwins+= player1.win;
               user.roundlosses+= player1.lose;
+              user['round'+player1.choice]++;
               user.save(function (err) {
                 if (err) { throw err; }
                 console.log('Saved for '+user.displayName);
@@ -704,6 +708,7 @@ Game.prototype.playGame = function(socket, callback) {
               if (socket.game.player2.roundplay) {
                 user.roundwins+= player2.win;
                 user.roundlosses+= player2.lose;
+                user['round'+player2.choice]++;
                 user.save(function (err) {
                   if (err) { throw err; }
                   console.log('saved');
