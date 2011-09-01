@@ -2,7 +2,7 @@
   "author": "Ryan Johnston <mrryanjohnston@gmail.com> (http://www.hardlyexpected.com)",
   "name": "rock-paper-scissors",
   "description": "Rock, Paper, Scissors online fun!",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "homepage": "http://rpsnode.nodejitsu.com",
   "repository": {
     "type": "git",

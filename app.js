@@ -489,7 +489,16 @@ function Game() {
   var player1;
   var player2;
 }
-var newGame = new Game();
+Game.prototype.setPlayer1 = function(socket, callback) {
+  this.player1 = socket;
+  socket.game = this;
+  callback();
+}
+Game.prototype.setPlayer2 = function(socket, callback) {
+  this.player2 = socket;
+  socket.game = this;
+  callback();
+}
 //Emits to both players
 Game.prototype.emittoboth = function(msg, data) {
   self = this
@@ -499,7 +508,7 @@ Game.prototype.emittoboth = function(msg, data) {
   }
 }
 Game.prototype.timer = function(seconds, callback) {
-  seconds || 5
+  seconds || (seconds = 5)
   self.emittoboth('timer', { data: seconds });
   var timerInterval = setInterval(function() {
     seconds--;
@@ -657,7 +666,6 @@ Game.prototype.determinewinner = function(callback) {
 Game.prototype.playGame = function(socket, callback) {
   socket.game.emittoboth('join',{data: {player1name: socket.game.player1.displayName, player2name: socket.game.player2.displayName}});
   socket.game.emittoboth('gamestatus', {data: 'Game is about to begin!'});
-  newGame = new Game();
   
   console.log('5 second countdown about to begin');
   //Ok, Finally, we do the game. This is the actual game execution
@@ -726,6 +734,7 @@ Game.prototype.playGame = function(socket, callback) {
     });
   });
 }
+var newGame = new Game();
 io.sockets.on('connection', function(socket){
   //First off, we can grab their name from a socket emission
   socket.on('initial', function(msg){
@@ -752,43 +761,43 @@ io.sockets.on('connection', function(socket){
             //If user has round plays
             if (user.roundplays>0) {
               console.log('User has some round plays left');
-              newGame.player1 = socket;
-              newGame.player1.roundplay = true;
-              user.roundplays--;
-              user.save(function(err) {
-                if(err) {throw err;}
-                console.log('Round plays decremented for user');
-                //Send emit notice back to user
-                socket.emit('roundplaycount',{data: user.roundplays });
+              newGame.setPlayer1(socket, function() {
+                socket.game.player1.roundplay = true;
+                user.roundplays--;
+                user.save(function(err) {
+                  if(err) {throw err;}
+                  console.log('Round plays decremented for user');
+                  //Send emit notice back to user
+                  socket.emit('roundplaycount',{data: user.roundplays });
+                });
+                socket.displayName = msg.data
+                socket.choice = socket.game.player1choice = {} //This will be the player's choice
               });
-              socket.displayName = msg.data
-              socket.game = newGame
-              socket.choice = socket.game.player1choice = {} //This will be the player's choice
             } else { //If user doesn't have round plays
-              console.log('User doesn\'t have round plays left');
-              newGame.player1 = socket;
-              socket.displayName = msg.data
-              socket.game = newGame
-              socket.choice = socket.game.player1choice = {} //This will be the player's choice
+              newGame.setPlayer1(socket, function() {
+                console.log('User doesn\'t have round plays left');
+                socket.displayName = msg.data
+                socket.choice = socket.game.player1choice = {} //This will be the player's choice
+              });
             }
           } else { //Player is refreshing page
             console.log('User is refreshing the page');
             //If user had round plays
             if (newGame.player1.roundplay) {
               console.log('This is a round play for the user');
-              newGame.player1 = socket;
-              newGame.player1.roundplay = true;
-              socket.displayName = msg.data
-              socket.game = newGame
-              socket.choice = socket.game.player1choice = {} //This will be the player's choice
-              //Send emit notice back to user
-              socket.emit('roundplaycount',{data: user.roundplays });
+              newGame.setPlayer1(socket, function() {
+                socket.game.player1.roundplay = true;
+                socket.displayName = msg.data
+                socket.choice = socket.game.player1choice = {} //This will be the player's choice
+                //Send emit notice back to user
+                socket.emit('roundplaycount',{data: user.roundplays });
+              });
             } else { //Player didn't have round plays
               console.log('Not a round play for the user');
-              newGame.player1 = socket;
-              socket.displayName = msg.data
-              socket.game = newGame
-              socket.choice = socket.game.player1choice = {} //This will be the player's choice
+              newGame.setPlayer1(socket, function() {
+                socket.displayName = msg.data
+                socket.choice = socket.game.player1choice = {} //This will be the player's choice
+              });
             }
           }          
           socket.emit('wait',{data: 'Waiting for opponent... In 10 seconds, a bot will join.'});
@@ -797,46 +806,48 @@ io.sockets.on('connection', function(socket){
           /*If a second player doesn't join in 10 seconds*/
           newGame.aitimer = setTimeout(function() {
             console.log('10 seconds elapsed before player2 joined. Bring in the bot.');
-            newGame.player2 = {displayName: 'Bot', isBot: true, };
-            newGame.player2.choice = socket.game.player2choice = {};
-            newGame.playGame(socket, function() {
-              
+            newGame.setPlayer2({displayName: 'Bot', isBot: true, }, function() {
+              newGame = new Game();
+              socket.game.player2.choice = socket.game.player2choice = {};
+              socket.game.playGame(socket, function() {
+                
+              });
             });
           }, 10000);
         } else { //If there is a game, have this player join the game, and then
         //free up the Game variable for the next client pair
           //Stop player1's 10 second coundown timer
           clearTimeout(newGame.aitimer);
-          
           //Decrement this person's round plays if not already at 0
           console.log('User is joining a game already initialized');
           if (user.roundplays>0) {
             console.log('User has some round plays left');
-            newGame.player2 = socket
-            newGame.player2.roundplay = true;
-            user.roundplays--;
-            user.save(function(err) {
-              if(err) {throw err;}
-              console.log('Round plays decremented for user');
-              //Send emit notice back to user
-              socket.emit('roundplaycount',{data: user.roundplays });
+            newGame.setPlayer2(socket, function() {
+              socket.game.player2.roundplay = true;
+              user.roundplays--;
+              user.save(function(err) {
+                if(err) {throw err;}
+                console.log('Round plays decremented for user');
+                //Send emit notice back to user
+                socket.emit('roundplaycount',{data: user.roundplays });
+              });
+              socket.displayName = msg.data
+              socket.choice = socket.game.player2choice = {} //This will be the player's choice
             });
-            socket.displayName = msg.data
-            socket.game = newGame
-            socket.choice = socket.game.player2choice = {} //This will be the player's choice
           } else {
             console.log('User doesn\'t have round plays left');
-            newGame.player2 = socket
-            socket.displayName = msg.data
-            socket.game = newGame
-            socket.choice = socket.game.player2choice = {} //This will be the player's choice
+            newGame.setPlayer2(socket, function() {
+              socket.displayName = msg.data
+              socket.choice = socket.game.player2choice = {} //This will be the player's choice
+            });
           }
-          
           console.log(socket.displayName + ' is player 2');
           
-          newGame.playGame(socket, function() {
+          socket.game.playGame(socket, function() {
             
           });
+          newGame = new Game();
+          console.log('test');
         } // This is the end of if player2
       } else {
         socket.emit('gamestatus', {data: 'Sorry, couldn\'t find you in our DB'});
